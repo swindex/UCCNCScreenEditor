@@ -1,0 +1,55 @@
+{
+  "name": "uccncscreeneditor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "webpack--dev": "webpack serve",
+    "build": "webpack --env=production",
+    "build-deploy": "webpack --env=production && node ./utils/deploy_web",
+    "deploy": "node ./utils/deploy_web"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.2",
+    "@fortawesome/free-solid-svg-icons": "^5.15.2",
+    "bootstrap-4-grid": "^3.4.0",
+    "core-js": "^3.8.3",
+    "leet-mvc": "github:swindex/leet-mvc"
+  },
+  "browser": {
+    "buffer": false
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/preset-env": "^7.12.16",
+    "autoprefixer": "^10.2.4",
+    "babel-loader": "^8.2.2",
+    "babel-preset-es2015": "^6.24.1",
+    "buffer": "^6.0.3",
+    "copy-webpack-plugin": "^7.0.0",
+    "css-loader": "^5.0.2",
+    "external-downloader": "^1.0.3",
+    "file-loader": "^6.2.0",
+    "ftp-deploy": "^2.4.1",
+    "html-loader": "^2.0.0",
+    "html-webpack-plugin": "^5.1.0",
+    "mini-css-extract-plugin": "^1.3.6",
+    "moment-locales-webpack-plugin": "^1.2.0",
+    "optimize-css-assets-webpack-plugin": "^5.0.4",
+    "postcss-loader": "^5.0.0",
+    "postcss-node-sass": "^2.1.8",
+    "progress-bar-webpack-plugin": "^2.1.0",
+    "raw-loader": "^4.0.2",
+    "sass": "^1.32.7",
+    "sass-loader": "^11.0.1",
+    "style-loader": "^2.0.0",
+    "uglifyjs-webpack-plugin": "^2.2.0",
+    "webpack": "^5.21.2",
+    "webpack-cleanup-plugin": "^0.5.1",
+    "webpack-cli": "^4.5.0",
+    "webpack-dev-server": "^3.11.2",
+    "webpack-merge": "^5.7.3"
+  }
+}

@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"checkJs": true,
+		"module": "commonjs",
+    "target": "es6",
+    "allowSyntheticDefaultImports": true
+	},
+	"sourcemap":true,
+	"baseUrl": ".",
+	"typeRoots": [ "","typings" ],
+	"include": [
+		"src/**/*",
+    "typings/**/*",
+    "node_modules/leet-mvc/**/*"
+	],
+	"exclude": [
+		"platforms",
+		"www"
+	],
+	"paths": {
+		"**/*": ["**/*"],
+		"src*": ["src*"],
+    "components/*": ["components/*"]
+	}
+}
