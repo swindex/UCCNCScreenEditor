@@ -34,33 +34,82 @@ export class EditorPage extends HeaderPage {
       buttonBackColorEnd: "#CCC",
       buttonTextColor: "#444",
       buttonTextSize: 32,
-      statusEnabled: true,
-      statusLineWidth: 6,
-      statusDisabledColor: "#B3B6B6",
-      statusEnabledColor: "#0F0",
+      isToggle: true,
+
+
       
+      toggleStyle:{
+        buttonBorderColor:  "",
+        buttonBackColor:  "",
+        buttonBackColorEnd:  "",
+        buttonTextColor:  "",
+
+        statusLineWidth: 6,
+        statusDisabledColor: "#B3B6B6",
+        statusEnabledColor: "#0F0",
+      },
+      downStyle:{
+        buttonBorderColor: "",
+        buttonBackColor: "#CCC",
+        buttonBackColorEnd: "#FEFEFE",
+        buttonTextColor: "",
+      }
+
     };
     this.form = new Forms([
       //{ type:"select", name:"controller", title:"Controller", placeholder:"Select Controller", dynamicItems: true},
-      { type:"label", value:"Button Properties"},
-      { type:"text", name:"buttonBaseFileName", title:"Button Base File Name", validateRule:"required|regex:^[a-zA-Z0-9_-]+$"},
-      { type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
-      { type:"number", name:"buttonX", title:"Button X", placeholder:"", validateRule:"numeric"},
-      { type:"number", name:"buttonY", title:"Button Y", placeholder:"", validateRule:"numeric"},
-      { type:"number", name:"buttonWidth", title:"Button Width", placeholder:"", validateRule:"required|numeric"},
-      { type:"number", name:"buttonHeight", title:"Button Height", placeholder:"", validateRule:"required|numeric"},
-      { type:"number", name:"buttonLineWidth", title:"Border Thickness", placeholder:"", validateRule:"required|numeric"},
-      { type:"number", name:"buttonBorderRadius", title:"Border Radius", placeholder:"", validateRule:"required|numeric"},
-      { type:"text", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:"required"},
-      { type:"text", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:"required"},
-      { type:"text", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:"required"},
-      { type:"text", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:"required"},
-      { type:"number", name:"buttonTextSize", title:"Text Size", unit:"px", dataType:"number", validateRule:"required|numeric"},
-      { type:"checkbox", name:"statusEnabled", title:"Show Status Line", dataType:"number", value: false},
-      { type:"number", name:"statusLineWidth", title:"StatusLineWidth", unit:"px", dataType:"number", validateRule:"required|numeric"},
-      { type:"text", name:"statusDisabledColor", title:"Disabled Color", placeholder:"", validateRule:"required"},
-      { type:"text", name:"statusEnabledColor", title:"Enabled Color", placeholder:"", validateRule:"required"},
+      { type:"form", class:"col-md-3", items:[
+        { type:"form", title:"Base Button Properties", class:"box", items:[
+          { type:"label", value:"Base Button Properties"},
+          { type:"text", name:"buttonBaseFileName", title:"Button Base File Name", validateRule:"required|regex:^[a-zA-Z0-9_-]+$"},
+          { type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
+          { type:"number", name:"buttonX", title:"Button X", placeholder:"", validateRule:"numeric"},
+          { type:"number", name:"buttonY", title:"Button Y", placeholder:"", validateRule:"numeric"},
+          { type:"number", name:"buttonWidth", title:"Button Width", placeholder:"", validateRule:"required|numeric"},
+          { type:"number", name:"buttonHeight", title:"Button Height", placeholder:"", validateRule:"required|numeric"},
+          { type:"number", name:"buttonBorderRadius", title:"Border Radius", placeholder:"", validateRule:"required|numeric"},
+          { type:"number", name:"buttonLineWidth", title:"Border Thickness", placeholder:"", validateRule:"required|numeric"},
+          { type:"checkbox", name:"isToggle", title:"Toggle Button", dataType:"number", value: false},
+        ]},
+      ]},
+      { type:"form", class:"col-md-3", items:[
+        { type:"form", class:"box", items:[
+          { type:"label", value:"UP Style"},
+          //{ type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
+          { type:"text", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:"required"},
+          { type:"text", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:"required"},
+          { type:"text", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:"required"},
+          { type:"text", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:"required"},
+          { type:"number", name:"buttonTextSize", title:"Text Size", unit:"px", dataType:"number", validateRule:"required|numeric"},
+        ]},
+      ]},
+      { type:"form", class:"col-md-3", items:[
+        { type:"form", name:"downStyle", class:"box", items:[
+          { type:"label", value:"Down Style"},
+          //{ type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
+          { type:"text", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:""},
+          { type:"text", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:""},
+          { type:"text", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:""},
+          { type:"text", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:""},
+        ]},
+      ]},
+      { type:"form", class:"col-md-3", displayRule:"true_if:isToggle,true", items:[
+        { type:"form", name:"toggleStyle", class:"box", items:[
+          { type:"label", value:"Toggle Style"},
+          
+          //{ type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
+          { type:"text", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:""},
+          { type:"text", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:""},
+          { type:"text", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:""},
+          { type:"text", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:""},
 
+          { type:"number", name:"statusLineWidth", title:"StatusLineWidth", unit:"px", dataType:"number", validateRule:"required|numeric"},
+
+          { type:"text", name:"statusDisabledColor", title:"Disabled Color", placeholder:"", validateRule:"required"},
+          { type:"text", name:"statusEnabledColor", title:"Enabled Color", placeholder:"", validateRule:"required"},
+
+        ]}
+      ]}
     ], this.formData);
     this.form.onChange = this.form.onInput = ()=>{
       this.drawControl();
@@ -78,23 +127,23 @@ export class EditorPage extends HeaderPage {
       this.lastErrorMessage = "";
       var ctx = this.cn_b_up
       ctx.canvas.height = this.formData.buttonHeight;
-      ctx.canvas.width = this.formData.buttonWidth * ( this.formData.statusEnabled ? 2 : 1);
+      ctx.canvas.width = this.formData.buttonWidth * ( this.formData.isToggle ? 2 : 1);
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
       this.drawButton_up(ctx);
 
-      if (this.formData.statusEnabled){
+      if (this.formData.isToggle){
         this.drawButton_up(ctx, true);
       }
       
       var ctx = this.cn_b_down
       ctx.canvas.height = this.formData.buttonHeight;
-      ctx.canvas.width = this.formData.buttonWidth * ( this.formData.statusEnabled ? 2 : 1);
+      ctx.canvas.width = this.formData.buttonWidth * ( this.formData.isToggle ? 2 : 1);
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
       this.drawButton_down(ctx);
 
-      if (this.formData.statusEnabled){
+      if (this.formData.isToggle){
         this.drawButton_down(ctx, true);
       }
     } catch (ex) {
@@ -106,12 +155,12 @@ export class EditorPage extends HeaderPage {
 /**
  * 
  * @param {CanvasRenderingContext2D} ctx 
- * @param {*} isEnabled 
+ * @param {*} isToggleOn 
  */
-  drawButton_up(ctx, isEnabled = false){
+  drawButton_up(ctx, isToggleOn = false){
 
     var x=0;
-    if (isEnabled) {
+    if (isToggleOn) {
       x = this.formData.buttonWidth + 0
     } else {
       x = 0
@@ -124,14 +173,14 @@ export class EditorPage extends HeaderPage {
       h: Number(this.formData.buttonHeight),
       bw: Number(this.formData.buttonLineWidth),
       br: Number(this.formData.buttonBorderRadius),
-      bc:  this.formData.buttonBorderColor,
-      bgc1: this.formData.buttonBackColor,
-      bgc2: this.formData.buttonBackColorEnd,
+      bc: isToggleOn ? (this.formData.toggleStyle.buttonBorderColor || this.formData.buttonBorderColor) : this.formData.buttonBorderColor,
+      bgc1: isToggleOn ? (this.formData.toggleStyle.buttonBackColor || this.formData.buttonBackColor) : this.formData.buttonBackColor,
+      bgc2: isToggleOn ? (this.formData.toggleStyle.buttonBackColorEnd || this.formData.buttonBackColorEnd) : this.formData.buttonBackColorEnd,
       text: this.formData.buttonTitle,
       ts: Number(this.formData.buttonTextSize),
-      tc: this.formData.buttonTextColor,
-      statusWidth:  this.formData.statusEnabled ? this.formData.statusLineWidth : 0,
-      statusColor:  isEnabled ?  this.formData.statusEnabledColor: this.formData.statusDisabledColor
+      tc: isToggleOn ? (this.formData.toggleStyle.buttonTextColor || this.formData.buttonTextColor) : this.formData.buttonTextColor,
+      statusWidth:  this.formData.isToggle ? this.formData.toggleStyle.statusLineWidth : 0,
+      statusColor:  isToggleOn ?  this.formData.toggleStyle.statusEnabledColor: this.formData.toggleStyle.statusDisabledColor
     })
     
   }
@@ -139,12 +188,12 @@ export class EditorPage extends HeaderPage {
   /**
  * 
  * @param {CanvasRenderingContext2D} ctx 
- * @param {*} isEnabled 
+ * @param {*} isToggleOn 
  */
-drawButton_down(ctx, isEnabled = false){
+drawButton_down(ctx, isToggleOn = false){
 
   var x=0;
-  if (isEnabled) {
+  if (isToggleOn) {
     x = this.formData.buttonWidth + 0
   } else {
     x = 0
@@ -157,14 +206,14 @@ drawButton_down(ctx, isEnabled = false){
     h: Number(this.formData.buttonHeight),
     bw: Number(this.formData.buttonLineWidth),
     br: Number(this.formData.buttonBorderRadius),
-    bc:  this.formData.buttonBorderColor,
-    bgc2: this.formData.buttonBackColor,
-    bgc1: this.formData.buttonBackColorEnd,
+    bc:  isToggleOn ? (this.formData.toggleStyle.buttonBorderColor || this.formData.downStyle.buttonBorderColor || this.formData.buttonBorderColor) : (this.formData.downStyle.buttonBorderColor || this.formData.buttonBorderColor),
+    bgc1: isToggleOn ? (this.formData.toggleStyle.buttonBackColor || this.formData.downStyle.buttonBackColor || this.formData.buttonBackColor) : (this.formData.downStyle.buttonBackColor || this.formData.buttonBackColor),
+    bgc2: isToggleOn ? (this.formData.toggleStyle.buttonBackColorEnd || this.formData.downStyle.buttonBackColorEnd || this.formData.buttonBackColorEnd) : (this.formData.downStyle.buttonBackColorEnd || this.formData.buttonBackColorEnd),
     text: this.formData.buttonTitle,
     ts: Number(this.formData.buttonTextSize),
-    tc: this.formData.buttonTextColor,
-    statusWidth:  this.formData.statusEnabled ? this.formData.statusLineWidth : 0,
-    statusColor:  isEnabled ?  this.formData.statusEnabledColor: this.formData.statusDisabledColor
+    tc: isToggleOn ? (this.formData.toggleStyle.buttonTextColor || this.formData.downStyle.buttonTextColor || this.formData.buttonTextColor) : (this.formData.downStyle.buttonTextColor || this.formData.buttonTextColor),
+    statusWidth:  this.formData.isToggle ? this.formData.toggleStyle.statusLineWidth : 0,
+    statusColor:  isToggleOn ?  this.formData.toggleStyle.statusEnabledColor: this.formData.toggleStyle.statusDisabledColor
   })
   
 }
@@ -215,8 +264,8 @@ var template = `
 <div class="wrapper">
   
   <div class="top"></div>
-  <div class="middle row">
-    <div class="col-6">
+  <div class="middle">
+    <div class="">
       <div class="">{{ this.formData.buttonBaseFileName }}_up.png</div>
       <canvas id="canvas_button_up"></canvas>
 
@@ -230,8 +279,8 @@ var template = `
         <button class="btn btn-primary" onclick="this.onSaveButtonClicked()">Export Files</button>
       </div>
     </div>
-    <div class="col-6 properties-wrapper">
-      <div class="properties">
+    <div class="properties-wrapper">
+      <div class="row properties">
         <!--<input id="file" type="file" onchange="this.onFileChange($event)" />-->
         <!--<button onclick="this.loadFileClicked()">Load File</button>-->
         <div [component]="this.form"></div>
