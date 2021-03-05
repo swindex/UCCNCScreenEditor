@@ -6,6 +6,19 @@ body,html{
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.touch-scroll{
+  overflow-y: auto;
+}
+#page-OptionsDialogPage li img {
+  max-width: 4em !important;
+  max-height: 2em;
+}
+.page-HeaderPage > .header {
+  background-color: #1e2021 !important;
+}
+.page-DialogPage .row {
+  //max-width: 430px !important;
+}
 @import "bootstrap-4-grid/scss/grid.scss";
 
 @import "leet-mvc/scss/buttons.scss";

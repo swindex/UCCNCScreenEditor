@@ -3,14 +3,27 @@ import { DOM } from "leet-mvc/core/DOM"
 import { Objects } from "leet-mvc/core/Objects";
 import { Forms } from "leet-mvc/components/Forms";
 import "./EditorPage.scss";
+import { DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
+import { ButtonNode } from "../Parser";
+import { Text } from "leet-mvc/core/text";
+import { Storage } from "leet-mvc/core/storage";
+import { Prompt } from "leet-mvc/core/simple_confirm";
+import { FileHelpers } from "../FileHelpers";
 
-export class EditorPage extends HeaderPage {
-  constructor(){
+
+export class EditorPage extends DialogPage {
+  /**
+   * 
+   * @param {ButtonNode} button 
+   */
+  constructor(button){
     super();
     this.selector = "page-EditorPage"
     this.title = "UCCNC Button Creator"
     /** @type {File} */
     this.file=null;
+
+    this.classNames.push('large');
 
     /** @type {CanvasRenderingContext2D} */
     this.cn_b_up = null;
@@ -19,22 +32,28 @@ export class EditorPage extends HeaderPage {
     this.cn_b_down = null;
 
     this.parser = new Parser()
-    this.formData = {
+
+    var fn = Text.fileName(button.picture.picture_up);
+    fn = fn.replace(/_up|_down/,'');
+
+    this.button = button;
+
+    this.data = {
       controller: null,
-      buttonBaseFileName:"",
+      buttonBaseFileName: fn,
       buttonTitle:"Hello",
       buttonX: 0,
       buttonY: 0,
-      buttonWidth: 120,
-      buttonHeight: 60,
+      buttonWidth: button.w*2,
+      buttonHeight: button.h*2,
       buttonLineWidth: 6,
       buttonBorderRadius: 10,
       buttonBorderColor: "#F0CD46",
       buttonBackColor: "#FEFEFE",
       buttonBackColorEnd: "#CCC",
       buttonTextColor: "#444",
-      buttonTextSize: 32,
-      isToggle: true,
+      buttonTextSize: button.h,
+      isToggle: button.toggle,
 
 
       
@@ -60,15 +79,13 @@ export class EditorPage extends HeaderPage {
       //{ type:"select", name:"controller", title:"Controller", placeholder:"Select Controller", dynamicItems: true},
       { type:"form", class:"col-md-3", items:[
         { type:"form", title:"Base Button Properties", class:"box", items:[
-          { type:"label", value:"Base Button Properties"},
-          { type:"text", name:"buttonBaseFileName", title:"Button Base File Name", validateRule:"required|regex:^[a-zA-Z0-9_-]+$"},
+          { type:"label", value:"Base Properties"},
+          { type:"text", name:"buttonBaseFileName", title:"Base File Name", validateRule:"required|regex:^[a-zA-Z0-9_-]+$"},
           { type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
-          { type:"number", name:"buttonX", title:"Button X", placeholder:"", validateRule:"numeric"},
-          { type:"number", name:"buttonY", title:"Button Y", placeholder:"", validateRule:"numeric"},
           { type:"number", name:"buttonWidth", title:"Button Width", placeholder:"", validateRule:"required|numeric"},
           { type:"number", name:"buttonHeight", title:"Button Height", placeholder:"", validateRule:"required|numeric"},
-          { type:"number", name:"buttonBorderRadius", title:"Border Radius", placeholder:"", validateRule:"required|numeric"},
-          { type:"number", name:"buttonLineWidth", title:"Border Thickness", placeholder:"", validateRule:"required|numeric"},
+          { type:"number", name:"buttonBorderRadius", title:"Border Radius", placeholder:"", validateRule:"numeric"},
+          { type:"number", name:"buttonLineWidth", title:"Border Thickness", placeholder:"", validateRule:"numeric"},
           { type:"checkbox", name:"isToggle", title:"Toggle Button", dataType:"number", value: false},
         ]},
       ]},
@@ -76,10 +93,10 @@ export class EditorPage extends HeaderPage {
         { type:"form", class:"box", items:[
           { type:"label", value:"UP Style"},
           //{ type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
-          { type:"text", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:"required"},
-          { type:"text", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:"required"},
-          { type:"text", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:"required"},
-          { type:"text", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:"required"},
+          { type:"color-picker", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:"required"},
+          { type:"color-picker", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:"required"},
+          { type:"color-picker", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:"required"},
+          { type:"color-picker", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:"required"},
           { type:"number", name:"buttonTextSize", title:"Text Size", unit:"px", dataType:"number", validateRule:"required|numeric"},
         ]},
       ]},
@@ -87,10 +104,10 @@ export class EditorPage extends HeaderPage {
         { type:"form", name:"downStyle", class:"box", items:[
           { type:"label", value:"Down Style"},
           //{ type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
-          { type:"text", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:""},
-          { type:"text", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:""},
-          { type:"text", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:""},
-          { type:"text", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:""},
         ]},
       ]},
       { type:"form", class:"col-md-3", displayRule:"true_if:isToggle,true", items:[
@@ -98,22 +115,108 @@ export class EditorPage extends HeaderPage {
           { type:"label", value:"Toggle Style"},
           
           //{ type:"textarea", name:"buttonTitle", title:"Button Title", validateRule:"required"},
-          { type:"text", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:""},
-          { type:"text", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:""},
-          { type:"text", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:""},
-          { type:"text", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonBorderColor", title:"Border Color", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonBackColor", title:"Back Color Start", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonBackColorEnd", title:"Back Color End", placeholder:"", validateRule:""},
+          { type:"color-picker", name:"buttonTextColor", title:"Text Color", placeholder:"", validateRule:""},
 
-          { type:"number", name:"statusLineWidth", title:"StatusLineWidth", unit:"px", dataType:"number", validateRule:"required|numeric"},
+          { type:"number", name:"statusLineWidth", title:"StatusLineWidth", unit:"px", dataType:"number", validateRule:"numeric"},
 
           { type:"text", name:"statusDisabledColor", title:"Disabled Color", placeholder:"", validateRule:"required"},
           { type:"text", name:"statusEnabledColor", title:"Enabled Color", placeholder:"", validateRule:"required"},
 
         ]}
       ]}
-    ], this.formData);
+    ], this.data);
     this.form.onChange = this.form.onInput = ()=>{
       this.drawControl();
     }
+    this.presetData = {}
+    this.presets = new Forms([
+      { type:"form", class:"row", items:[
+        { type: "select", name:"preset", class:"col-md-4", title:"Presets", placeholder:"Select preset ...", dynamicItems:true },
+        { type: "button", name:"update", class:"col-md-2", value:"Update", title:" ", displayRule:"true_if_not:preset,null"},
+        { type: "button", name:"create", class:"col-md-2", value:"Create", title:" "}
+      ]}
+    ],this.presetData)
+
+    this.presets.onButtonClick = (ev)=>{
+      if (ev.target.name == "create") {
+        Prompt("Enter preset name", (val)=>{
+
+          var preset = Objects.find(this.presetItems, p=> p.preset == val);
+          this.data.preset = val;
+        
+          if (preset){
+            Objects.overwrite(preset, this.data);
+          } else {
+            this.presets.fields.preset.items.push({value:val, title: val});
+            this.presetItems.push(Objects.copy(this.data));
+          }
+          Storage.set("ButtonGeneratePresets", this.presetItems);
+        })
+      }
+      if (ev.target.name == "update") {
+        this.data.preset = this.presetData.preset
+
+        var preset = Objects.find(this.presetItems, p=> p.preset == this.data.preset);
+        
+        if (preset){
+          Objects.overwrite(preset, this.data);
+        } else {
+          this.presetItems.push(Objects.copy(this.data));
+        }
+
+        Storage.set("ButtonGeneratePresets", this.presetItems);
+        
+      }
+    }
+    this.presets.onChange = ()=>{
+      var preset = Objects.find(this.presetItems, p=> p.preset == this.presetData.preset);
+      this.data.isToggle = preset.isToggle;      
+
+      this.data.buttonTextSize = preset.buttonTextSize;
+      this.data.buttonBorderRadius = preset.buttonBorderRadius;
+      this.data.buttonLineWidth = preset.buttonLineWidth;
+      this.data.buttonBackColor = preset.buttonBackColor;
+      this.data.buttonBackColorEnd = preset.buttonBackColorEnd;
+      this.data.buttonBorderColor = preset.buttonBorderColor;
+      this.data.buttonTextColor = preset.buttonTextColor;
+
+
+      this.data.downStyle.buttonBackColor = preset.downStyle.buttonBackColor;
+      this.data.downStyle.buttonBackColorEnd = preset.downStyle.buttonBackColorEnd;
+      this.data.downStyle.buttonBorderColor = preset.downStyle.buttonBorderColor;
+      this.data.downStyle.buttonTextColor = preset.downStyle.buttonTextColor;
+
+      this.data.toggleStyle.buttonBackColor = preset.toggleStyle.buttonBackColor;
+      this.data.toggleStyle.buttonBackColorEnd = preset.toggleStyle.buttonBackColorEnd;
+      this.data.toggleStyle.buttonBorderColor = preset.toggleStyle.buttonBorderColor;
+      this.data.toggleStyle.buttonTextColor = preset.toggleStyle.buttonTextColor;
+      this.data.toggleStyle.statusEnabledColor = preset.toggleStyle.statusEnabledColor;
+      this.data.toggleStyle.statusDisabledColor = preset.toggleStyle.statusDisabledColor;
+      this.data.toggleStyle.statusLineWidth = preset.toggleStyle.statusLineWidth;
+      this.drawControl();
+    }
+
+    this.presetItems = Storage.get("ButtonGeneratePresets",[]);
+
+    this.presets.fields.preset.items = Objects.map(this.presetItems, (p)=>{
+      return {
+        value: p.preset,
+        title: p.preset,
+      }
+    });
+
+    this.buttons = {
+      Close:()=>{},
+      "Save Files": ()=>{
+        this.onSaveButtonClicked();
+
+        return false;
+      }
+    }
+
     //imageElem = document.getElementById('image');
   }
   onInit(){
@@ -126,24 +229,24 @@ export class EditorPage extends HeaderPage {
     try {
       this.lastErrorMessage = "";
       var ctx = this.cn_b_up
-      ctx.canvas.height = this.formData.buttonHeight;
-      ctx.canvas.width = this.formData.buttonWidth * ( this.formData.isToggle ? 2 : 1);
+      ctx.canvas.height = this.data.buttonHeight;
+      ctx.canvas.width = this.data.buttonWidth * ( this.data.isToggle ? 2 : 1);
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
       this.drawButton_up(ctx);
 
-      if (this.formData.isToggle){
+      if (this.data.isToggle){
         this.drawButton_up(ctx, true);
       }
       
       var ctx = this.cn_b_down
-      ctx.canvas.height = this.formData.buttonHeight;
-      ctx.canvas.width = this.formData.buttonWidth * ( this.formData.isToggle ? 2 : 1);
+      ctx.canvas.height = this.data.buttonHeight;
+      ctx.canvas.width = this.data.buttonWidth * ( this.data.isToggle ? 2 : 1);
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
       this.drawButton_down(ctx);
 
-      if (this.formData.isToggle){
+      if (this.data.isToggle){
         this.drawButton_down(ctx, true);
       }
     } catch (ex) {
@@ -161,7 +264,7 @@ export class EditorPage extends HeaderPage {
 
     var x=0;
     if (isToggleOn) {
-      x = this.formData.buttonWidth + 0
+      x = this.data.buttonWidth + 0
     } else {
       x = 0
     }
@@ -169,18 +272,18 @@ export class EditorPage extends HeaderPage {
     drawButton(ctx, {
       x:x,
       y:0,
-      w: Number(this.formData.buttonWidth),
-      h: Number(this.formData.buttonHeight),
-      bw: Number(this.formData.buttonLineWidth),
-      br: Number(this.formData.buttonBorderRadius),
-      bc: isToggleOn ? (this.formData.toggleStyle.buttonBorderColor || this.formData.buttonBorderColor) : this.formData.buttonBorderColor,
-      bgc1: isToggleOn ? (this.formData.toggleStyle.buttonBackColor || this.formData.buttonBackColor) : this.formData.buttonBackColor,
-      bgc2: isToggleOn ? (this.formData.toggleStyle.buttonBackColorEnd || this.formData.buttonBackColorEnd) : this.formData.buttonBackColorEnd,
-      text: this.formData.buttonTitle,
-      ts: Number(this.formData.buttonTextSize),
-      tc: isToggleOn ? (this.formData.toggleStyle.buttonTextColor || this.formData.buttonTextColor) : this.formData.buttonTextColor,
-      statusWidth:  this.formData.isToggle ? this.formData.toggleStyle.statusLineWidth : 0,
-      statusColor:  isToggleOn ?  this.formData.toggleStyle.statusEnabledColor: this.formData.toggleStyle.statusDisabledColor
+      w: Number(this.data.buttonWidth),
+      h: Number(this.data.buttonHeight),
+      bw: Number(this.data.buttonLineWidth),
+      br: Number(this.data.buttonBorderRadius),
+      bc: isToggleOn ? (this.data.toggleStyle.buttonBorderColor || this.data.buttonBorderColor) : this.data.buttonBorderColor,
+      bgc1: isToggleOn ? (this.data.toggleStyle.buttonBackColor || this.data.buttonBackColor) : this.data.buttonBackColor,
+      bgc2: isToggleOn ? (this.data.toggleStyle.buttonBackColorEnd || this.data.buttonBackColorEnd) : this.data.buttonBackColorEnd,
+      text: this.data.buttonTitle,
+      ts: Number(this.data.buttonTextSize),
+      tc: isToggleOn ? (this.data.toggleStyle.buttonTextColor || this.data.buttonTextColor) : this.data.buttonTextColor,
+      statusWidth:  this.data.isToggle ? this.data.toggleStyle.statusLineWidth : 0,
+      statusColor:  isToggleOn ?  this.data.toggleStyle.statusEnabledColor: this.data.toggleStyle.statusDisabledColor
     })
     
   }
@@ -194,7 +297,7 @@ drawButton_down(ctx, isToggleOn = false){
 
   var x=0;
   if (isToggleOn) {
-    x = this.formData.buttonWidth + 0
+    x = this.data.buttonWidth + 0
   } else {
     x = 0
   }
@@ -202,18 +305,18 @@ drawButton_down(ctx, isToggleOn = false){
   drawButton(ctx, {
     x:x,
     y:0,
-    w: Number(this.formData.buttonWidth),
-    h: Number(this.formData.buttonHeight),
-    bw: Number(this.formData.buttonLineWidth),
-    br: Number(this.formData.buttonBorderRadius),
-    bc:  isToggleOn ? (this.formData.toggleStyle.buttonBorderColor || this.formData.downStyle.buttonBorderColor || this.formData.buttonBorderColor) : (this.formData.downStyle.buttonBorderColor || this.formData.buttonBorderColor),
-    bgc1: isToggleOn ? (this.formData.toggleStyle.buttonBackColor || this.formData.downStyle.buttonBackColor || this.formData.buttonBackColor) : (this.formData.downStyle.buttonBackColor || this.formData.buttonBackColor),
-    bgc2: isToggleOn ? (this.formData.toggleStyle.buttonBackColorEnd || this.formData.downStyle.buttonBackColorEnd || this.formData.buttonBackColorEnd) : (this.formData.downStyle.buttonBackColorEnd || this.formData.buttonBackColorEnd),
-    text: this.formData.buttonTitle,
-    ts: Number(this.formData.buttonTextSize),
-    tc: isToggleOn ? (this.formData.toggleStyle.buttonTextColor || this.formData.downStyle.buttonTextColor || this.formData.buttonTextColor) : (this.formData.downStyle.buttonTextColor || this.formData.buttonTextColor),
-    statusWidth:  this.formData.isToggle ? this.formData.toggleStyle.statusLineWidth : 0,
-    statusColor:  isToggleOn ?  this.formData.toggleStyle.statusEnabledColor: this.formData.toggleStyle.statusDisabledColor
+    w: Number(this.data.buttonWidth),
+    h: Number(this.data.buttonHeight),
+    bw: Number(this.data.buttonLineWidth),
+    br: Number(this.data.buttonBorderRadius),
+    bc:  isToggleOn ? (this.data.toggleStyle.buttonBorderColor || this.data.downStyle.buttonBorderColor || this.data.buttonBorderColor) : (this.data.downStyle.buttonBorderColor || this.data.buttonBorderColor),
+    bgc1: isToggleOn ? (this.data.toggleStyle.buttonBackColor || this.data.downStyle.buttonBackColor || this.data.buttonBackColor) : (this.data.downStyle.buttonBackColor || this.data.buttonBackColor),
+    bgc2: isToggleOn ? (this.data.toggleStyle.buttonBackColorEnd || this.data.downStyle.buttonBackColorEnd || this.data.buttonBackColorEnd) : (this.data.downStyle.buttonBackColorEnd || this.data.buttonBackColorEnd),
+    text: this.data.buttonTitle,
+    ts: Number(this.data.buttonTextSize),
+    tc: isToggleOn ? (this.data.toggleStyle.buttonTextColor || this.data.downStyle.buttonTextColor || this.data.buttonTextColor) : (this.data.downStyle.buttonTextColor || this.data.buttonTextColor),
+    statusWidth:  this.data.isToggle ? this.data.toggleStyle.statusLineWidth : 0,
+    statusColor:  isToggleOn ?  this.data.toggleStyle.statusEnabledColor: this.data.toggleStyle.statusDisabledColor
   })
   
 }
@@ -235,13 +338,20 @@ drawButton_down(ctx, isToggleOn = false){
     reader.readAsText(file)
   }
 
-  onSaveButtonClicked(){
+  async onSaveButtonClicked(){
     if (!this.form.validator.validate())
       return;
-    downloadFile(this.cn_b_up.canvas, this.formData.buttonBaseFileName + "_up.png");
-    setTimeout(()=>{
-      downloadFile(this.cn_b_down.canvas, this.formData.buttonBaseFileName + "_down.png");
-    },500)
+    if (this.button.picture.picture_up_handle){
+      await FileHelpers.saveCanvasToFileHandle(this.cn_b_up.canvas, this.button.picture.picture_up_handle)
+    } else {
+      downloadFile(this.cn_b_up.canvas, this.data.buttonBaseFileName + "_up.png");
+    }
+
+    if (this.button.picture.picture_down_handle){
+      await FileHelpers.saveCanvasToFileHandle(this.cn_b_down.canvas, this.button.picture.picture_down_handle)
+    } else {
+      downloadFile(this.cn_b_down.canvas, this.data.buttonBaseFileName + "_down.png");
+    }
   }
 
   parse(text){
@@ -256,7 +366,7 @@ drawButton_down(ctx, isToggleOn = false){
   }
 
   get template (){
-    return super.extendTemplate(super.template, template);
+    return this.extendTemplate(super.template, template);
   }
 }
 
@@ -266,20 +376,23 @@ var template = `
   <div class="top"></div>
   <div class="middle">
     <div class="">
-      <div class="">{{ this.formData.buttonBaseFileName }}_up.png</div>
+      <div class="">{{ this.data.buttonBaseFileName }}_up.png</div>
       <canvas id="canvas_button_up"></canvas>
 
-      <div class="">{{ this.formData.buttonBaseFileName }}_down.png</div>
+      <div class="">{{ this.data.buttonBaseFileName }}_down.png</div>
       <canvas id="canvas_button_down"></canvas>
       <div class="error">
         <pre>{{this.lastErrorMessage}}</pre>
       </div>
-      <div class="">
+      <!--<div class="">
         <a id="link"></a>
         <button class="btn btn-primary" onclick="this.onSaveButtonClicked()">Export Files</button>
-      </div>
+      </div>-->
     </div>
     <div class="properties-wrapper">
+      <div class="presets">
+        <div [component]="this.presets"></div>
+      </div>
       <div class="row properties">
         <!--<input id="file" type="file" onchange="this.onFileChange($event)" />-->
         <!--<button onclick="this.loadFileClicked()">Load File</button>-->
