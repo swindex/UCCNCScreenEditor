@@ -614,6 +614,9 @@ export class LayoutPage extends HeaderPage {
 
   onGenerateButtonClicked(){
     var p = Injector.Nav.push(new EditorPage(this.selectedNodes[0]) )
+    p.onDestroy = ()=>{
+      this.reRender();
+    }
   }
 
   get isSelectedElementPictureGenSupported(){
@@ -1547,8 +1550,8 @@ var template = `
   <div class="right">
     <div class="buttons mb-1">
       <button type="button" class="" onclick="this.onLoadScreensetClicked()" title="Load Screenset ..."><i class="fas fa-folder-open"></i></button>
-      <button type="button" [if]="this.fileHandle" class="" onclick="this.onSaveScreensetClicked()" title="Save Screenset" [if]="this.pendingSave && this.parser.getNodes().length>0"><i class="fas fa-save"></i></button>
-      <button type="button" class="" onclick="this.onSaveAsScreensetClicked()" title="Save Screenset As ..." [if]="this.pendingSave && this.parser.getNodes().length>0">Save As</button>
+      <button type="button" [if]="this.fileHandle" class="" onclick="this.onSaveScreensetClicked()" title="Save Screenset" [disabled]="!this.pendingSave || this.parser.getNodes().length==0"><i class="fas fa-save"></i></button>
+      <button type="button" class="" onclick="this.onSaveAsScreensetClicked()" title="Save Screenset As ..." [disabled]="this.parser.getNodes().length==0">Save As</button>
       <button type="button" [if]="this.data.controller" class="" title="Edit Screen Properties" onclick="this.onEditScreenProperttiesClicked()"><i class="fas fa-desktop"></i></button>
       <button type="button" [if]="this.data.controller" class="" title="Edit Picture List" onclick="this.onEditPictureListClicked()"><i class="fas fa-images"></i></button>
     </div>

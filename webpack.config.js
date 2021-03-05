@@ -42,7 +42,8 @@ module.exports = (env) => {
         })],
       } : {}),
       output: {
-        path: path.resolve(__dirname, 'www')
+        path: path.resolve(__dirname, 'www'),
+        publicPath: mode != "production" ? '/' : 'https://snapwebapps.com/uccnceditor/',
       },
       mode: mode,
       plugins: plugins
