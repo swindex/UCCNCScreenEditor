@@ -573,7 +573,7 @@ export class LabelNode extends ControlNode {
   /** @return {LabelNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addlabel\s*\(\s*"(?<value>[^,]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addlabel\s*\(\s*"(?<value>[^"]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new LabelNode()
@@ -608,7 +608,6 @@ export class CodeviewNode extends ControlNode {
     this.fontSize = 24;
     this.color = 0;
     this.layerN = 0;
-    this.controllN = 0;
   }
   /** @return {CodeviewNode|null} */
   static parse(cCode = ""){
@@ -626,8 +625,7 @@ export class CodeviewNode extends ControlNode {
     ret.x = Number(m.groups.x);
     ret.y = Number(m.groups.y);
     ret.w = Number(m.groups.w);
-    ret.h = Number(m.groups.h);
-    ret.controllN =  Number(m.groups.controllN);
+    ret.h = 339;
     ret.layerN = Number(m.groups.layerN);
 
     return ret;
@@ -635,7 +633,7 @@ export class CodeviewNode extends ControlNode {
 
   /** @return {string} */
   getCCode(){
-    return `${this.container}.Addcodeview("${this.value}", "${this.font}", "${this.align}", ${this.fontSize}, ${this.color}, ${this.x}, ${this.y}, ${this.w}, ${this.h}, ${this.layerN});`
+    return `${this.container}.Addcodeview("${this.value}", "${this.font}", "${this.align}", ${this.fontSize}, ${this.color}, ${this.x}, ${this.y}, ${this.w}, 339, ${this.layerN});`
   }
 }
 

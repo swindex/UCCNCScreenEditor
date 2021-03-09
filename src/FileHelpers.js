@@ -1,6 +1,7 @@
 export const FileHelpers = {
-  verifyPermission(fileHandle, readWrite) {
+  verifyPermission(fileHandle, readWrite = false) {
     const options = {};
+    options.mode = 'read';
     if (readWrite) {
       options.mode = 'readwrite';
     }
@@ -38,7 +39,38 @@ export const FileHelpers = {
     }
   },
 
+  async getDirectoryFileHandle(dirHandle, fileName){
+    if (await FileHelpers.verifyPermission(dirHandle, true))
+      return await dirHandle.getFileHandle(fileName);
+  },
+
+  /**
+   * 
+   * @param {*} dirHandle 
+   * @param {*} fileName 
+   * @return {Promise<{fileHandle:any,contents:string|ArrayBuffer}>}
+   */
+  async getDirectoryFileHandleAndContents(dirHandle, fileName){
+    if (! await FileHelpers.verifyPermission(dirHandle, true)){
+      throw new Error("Permission to read files not given")
+    }
+    var fileHandle = await dirHandle.getFileHandle(fileName);
+    var file = await fileHandle.getFile();
+    var reader = new FileReader()
+
+    return new Promise(function(resolve){
+      reader.onload = (e)=>{
+        resolve({ fileHandle:fileHandle, contents: e.target.result} )
+      }
+      reader.readAsDataURL(file);
+    })
+  },
+
   async getDirectoryFileContents(dirHandle, fileName){
+    if (! await FileHelpers.verifyPermission(dirHandle, true)){
+      throw new Error("Permission to read files not given")
+    }
+
     var fileHandle = await dirHandle.getFileHandle(fileName);
     var file = await fileHandle.getFile();
     var reader = new FileReader()

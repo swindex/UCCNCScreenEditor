@@ -1,4 +1,5 @@
 import './index.scss'; //require index.scss file
+import 'leet-mvc/scss/app.scss'; //require index.scss file
 import 'leet-mvc/scss/forms.scss'; //require index.scss file
 
 //import "core-js/stable";

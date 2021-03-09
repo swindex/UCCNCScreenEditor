@@ -14,8 +14,10 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.2",
     "@fortawesome/free-solid-svg-icons": "^5.15.2",
+    "@types/wicg-file-system-access": "^2020.9.1",
     "bootstrap-4-grid": "^3.4.0",
     "core-js": "^3.8.3",
+    "idb-keyval": "^5.0.4",
     "leet-mvc": "github:swindex/leet-mvc"
   },
   "browser": {

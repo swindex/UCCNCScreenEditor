@@ -7,17 +7,21 @@ import "./LayoutPage.scss";
 import * as donatecode from "./donatecode.html";
 import { Text } from "leet-mvc/core/text";
 import { round } from "leet-mvc/core/helpers";
-import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_confirm";
-import { Dialog, DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
-import { BaseComponent } from "leet-mvc/components/BaseComponent";
-import { EnableCustomElements } from "leet-mvc/core/EnableCustomElements";
-import { RegisterComponent } from "leet-mvc/core/Register";
-import { OptionsDialogPage } from "leet-mvc/pages/OptionsDialogPage/OptionsDialogPage";
+import { Alert, Confirm, ConfirmButtons } from "leet-mvc/core/simple_confirm";
+import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
 import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
 import { PictureListEditor } from "./PictureListEditor";
+import { FontsList } from "../Fonts";
+import { get, set } from "idb-keyval";
+import { ButtonNumbers } from "../ButtonNumbers";
+import { LedNumbers } from "../LedNumbers";
+import { FieldNumbers } from "../FieldNumbers";
+import { CheckBoxNumbers } from "../CheckBoxNumbers";
+import { FieldTypes } from "../FieldTypes";
+
 
 export class LayoutPage extends HeaderPage {
   constructor(){
@@ -25,9 +29,10 @@ export class LayoutPage extends HeaderPage {
     
     this.selector = "page-LayoutPage"
     this.title = "UCCNC Layout Editor"
-    /** @type {File} */
-    this.fileHandle=null;
-    this.dirHandle = null;
+    /** @type {FileSystemFileHandle} */
+    this.fileHandle= undefined;
+    /** @type {FileSystemDirectoryHandle} */
+    this.dirHandle = undefined;
 
     /** @type {HTMLDivElement} */
     this.selectBox = null;
@@ -35,7 +40,7 @@ export class LayoutPage extends HeaderPage {
     /** @type {string[]} */
     this.history = [];
 
-    this.pendingSave = false;
+    this.pendingSave = undefined;
 
     /** @type {PictureNode[]} */
     this.pictures = [];
@@ -49,6 +54,10 @@ export class LayoutPage extends HeaderPage {
       controllType: null,
       controllTypeName: null,
       controllN: null,
+      buttonN: null,
+      ledN: null,
+      fieldN: null,
+      checkBoxN: null,
       layerN: null,
       parentN: null,
       x: null,
@@ -72,19 +81,27 @@ export class LayoutPage extends HeaderPage {
       max: null,
       clickable: null,
       transparency: null,
+      value: null,
+      fieldType: null,
     }
     this.data = Objects.copy(this.dataClean);
 
     this.controlPropertiesForm = { type:"form", class:"box", displayRule:"true_if_not:controllType,null", items:[
       { type:"label", value:"Control Properties"},
       { type:"text", title:"Control Type", name:"controllTypeName", attributes:{disabled:true}},
-      { type:"text", title:"Control Number", name:"controllN", displayRule:`true_if_not:controllType,${TabNode.name},${BackgroundNode.name},${FillNode.name}` },
+      { type:"select", name:"fieldType", title:"Fild Type", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name}`, validateRule:"required", class:"", items: Objects.copy(FieldTypes)},
+
+      { type:"text", title:"Control Number", name:"controllN", displayRule:`true_if:controllType,${ListNode.name},${ColorNode.name}` },
+      { type:"function-select", title:"Button Number", name:"buttonN", validateRule:"required|numeric", displayRule:`true_if:controllType,${ButtonNode.name}`, items: getButtonsDropDown(ButtonNumbers), attributes:{showItemsOnFocus:true} },
+      { type:"function-select", title:"Led Number", name:"ledN", validateRule:"required|numeric", displayRule:`true_if:controllType,${LedNode.name}`, items: getButtonsDropDown(LedNumbers), attributes:{showItemsOnFocus:true} },
+      { type:"function-select", title:"Field Number", name:"fieldN", validateRule:"required|numeric", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items: getButtonsDropDown(FieldNumbers), attributes:{showItemsOnFocus:true} },
+      { type:"function-select", title:"Checkbox Number", name:"checkBoxN", validateRule:"required|numeric", displayRule:`true_if:controllType,${CheckboxNode.name}`, items: getButtonsDropDown(CheckBoxNumbers), attributes:{showItemsOnFocus:true} },
       { type:"number", title:"Parent Layer Number", name:"parentN", displayRule:`true_if:controllType,${BackgroundNode.name},${TabNode.name}`, validateRule:"required|numeric" },
-      { type:"number", title:"Layer Number", name:"layerN", validateRule:"numeric"},
+      { type:"number", title:"Layer Number", name:"layerN", validateRule:"numeric|min:0|max:49"},
       { type:"form", class:"row", items:[
         { type:"number", name:"x", title:"X", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
         { type:"number", name:"y", title:"Y", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
-        { type:"number", name:"w", title:"Width", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
+        { type:"number", name:"w", title:"Width", placeholder:"", displayRule:`true_if_not:controllType,${LabelNode.name},${CheckboxNode.name}`, validateRule:"required|numeric", class:"col-6", unit:"px"},
         { type:"number", name:"h", title:"Height", placeholder:"", displayRule:`true_if:controllType,${ButtonNode.name},${BackgroundNode.name},${UCCAMNode.name},${ListNode.name},${LedNode.name},${ToolpathNode.name},${TabNode.name},${FillNode.name}`, validateRule:"required|numeric", class:"col-6", unit:"px"},
       ]},
       { type:"form", class:"row", items:[
@@ -107,12 +124,19 @@ export class LayoutPage extends HeaderPage {
         { type:"checkbox", name:"clickable", title:"Clickable", value: false, class:"col-6"},
       ]},
 
-      { type:"text", name:"font", title:"Font Family", placeholder:"", displayRule:"true_if:controllType,"+FieldNode.name+","+ListNode.name+","+TabNode.name+"", validateRule:"required", unit:""},
-      { type:"number", name:"fontSize", title:"Font Size", placeholder:"", displayRule:"true_if:controllType,"+FieldNode.name+","+ListNode.name+","+TabNode.name+"", validateRule:"required|numeric", unit:"px"},
+      { type:"form", class:"row", displayRule:`true_if:controllType,${FieldNode.name},${ListNode.name},${TabNode.name},${CodeviewNode.name},${LabelNode.name}`, items:[
+        { type:"select", name:"font", title:"Font Name", placeholder:"", validateRule:"required", class:"col-6", items: Objects.copy(FontsList)},
+        { type:"number", name:"fontSize", title:"Font Size", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
+      ]}, 
+     
+      { type:"form", class:"row", displayRule:`true_if:controllType,${LabelNode.name}`, items:[
+        { type:"text", name:"value", title:"Label Text", placeholder:"Label Text", validateRule:"", class:"col-12"},
+      ]}, 
+
       { type:"color-picker", name:"color", title:"Color", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name},${ListNode.name},${SliderNode.name},${FillNode.name}`, validateRule:"required" },
       { type:"color-picker", name:"color2", title:"Color 2", placeholder:"", displayRule:"true_if:controllType,"+SliderNode.name, validateRule:"required"},
 
-      { type:"number", name:"transparency", title:"Transparency", placeholder:"", displayRule:`true_if:controllType,${ListNode.name},${FillNode.name}`, validateRule:"required|numeric", unit:"px"},
+      { type:"number", name:"transparency", title:"Opacity", placeholder:"", displayRule:`true_if:controllType,${ListNode.name},${FillNode.name}`, validateRule:"required|numeric|min:0|max:1", unit:""},
       
       { type:"select", name:"align", title:"Text Align", placeholder:"", displayRule:"true_if:controllType,"+FieldNode.name+","+ListNode.name+","+TabNode.name+"", validateRule:"required", items:[
         { value:"left", title: "Left"},
@@ -151,16 +175,41 @@ export class LayoutPage extends HeaderPage {
     this.parser = new Parser()
 
     this.jogVisible = false;
-
+    this.LastSession = null;
+    get("HistorySnapshot").then(snap=>{
+      this.LastSession = snap;
+    })
+    get("pendingSave").then(val=>{
+      this.pendingSave = val;
+    })
   }
 
-  reRender(){
+  pendingSaveChange(val){
+    if ( val!== undefined)
+    set("pendingSave", val);
+  }
+
+  fileHandleChange(val){
+    if ( val!== undefined)
+    set("fileHandle",val);
+  }
+  dirHandleChange(val){
+    if ( val!== undefined)
+    set("dirHandle",val);
+  }
+  isSampleLoadedChange(val){
+    if ( val!== undefined)
+    set("isSampleLoaded",val);
+  }
+
+  async reRender(){
     this.pictures = Objects.filter(this.parser.getNodes(), n=> (n instanceof PictureNode && n.region == this.data.controller ))
     this.pictures.sort(function(a,b){
       return a.controllN - b.controllN
     })
-    this.renderMainArea();
-    this.renderJogArea();
+   
+    await this.renderMainArea();
+    await this.renderJogArea();
     this.hideOrShowJog();
   }
 
@@ -174,12 +223,12 @@ export class LayoutPage extends HeaderPage {
       this.jogArea.children[0].remove();
   }
 
-  renderMainArea(){
+  async renderMainArea(){
     var oldChild = this.mainArea.children[0];
     if (oldChild){
       oldChild.style.zIndex = 2;
     }
-    var el = this.renderControls(this.data.controller, this.parser.getNodes(),"AS3");
+    var el = await this.renderControls(this.data.controller, this.parser.getNodes(),"AS3");
     if (el) this.mainArea.appendChild(el);
 
     if (oldChild)
@@ -188,12 +237,12 @@ export class LayoutPage extends HeaderPage {
       }, 200);
         
   }
-  renderJogArea(){
+  async renderJogArea(){
     var oldChild = this.jogArea.children[0];
     if (oldChild){
       oldChild.style.zIndex = 2;
     }
-    var el = this.renderControls(this.data.controller, this.parser.getNodes(),"AS3jog")
+    var el = await this.renderControls(this.data.controller, this.parser.getNodes(),"AS3jog")
     if (el) this.jogArea.appendChild(el);
 
     if (oldChild)
@@ -643,6 +692,8 @@ export class LayoutPage extends HeaderPage {
     if (this.history[this.history.length-1] !== cCode)
     this.history.push(cCode);
     this.pendingSave = true;
+
+    set("HistorySnapshot", cCode);
   }
 
   onUndoClicked(){
@@ -654,7 +705,7 @@ export class LayoutPage extends HeaderPage {
       //get previous state
       var snap = this.history[this.history.length-1]
       var controller = this.data.controller;
-      this.parse(snap);
+      this.parse(snap, true);
       this.data.controller = controller;
       this.historyReverting = false;
     }
@@ -676,7 +727,7 @@ Please make sure to accept all file and directory acess permissions shown by the
             var text = await file.text();
             
             this.history = [];
-            this.parse(text);
+            this.parse(text, false);
           }
         //}
       } catch (ex) {
@@ -697,8 +748,32 @@ Please make sure to accept all file and directory acess permissions shown by the
 
       FetchFile(file).then(text=>{
         this.history = [];
-        this.parse(text);
+        this.parse(text, false);
       })
+  }
+
+  async onRestoreSessionClicked(){
+    var dirHandle = null
+    await get("dirHandle").then(val=>{
+      dirHandle = val;
+    })
+    if (dirHandle && !await FileHelpers.verifyPermission(dirHandle, true)) {
+      Alert("Permission was not given to access the Flashcreen directory!")
+      return;
+    }
+    this.dirHandle = dirHandle
+
+    this.history = [];
+    
+    await get("isSampleLoaded").then(val=>{
+      this.isSampleLoaded = val;
+    })
+    await get("fileHandle").then(val=>{
+      this.fileHandle = val;
+    })
+
+    
+    this.parse(this.LastSession, this.pendingSave);
   }
 
   async onSaveAsScreensetClicked(){
@@ -1031,14 +1106,15 @@ Please make sure to accept all file and directory acess permissions shown by the
       this.data.controllN = node.controllN;
             
       if (node instanceof ButtonNode) {
-        this.data.picN = node.picN
-        this.data.picNN = node.picN
+        this.data.buttonN = node.controllN;
+        this.data.picN = node.picN;
         this.data.toggle = node.toggle;
         this.data.blink = node.blink;
         this.data.pictureSRC_up = node.picture.picture_up;
         this.data.pictureSRC_down = node.picture.picture_down;
       }
       if (node instanceof LedNode) {
+        this.data.ledN = node.controllN;
         this.data.picN = node.picN
         this.data.blink = node.blink;
         this.data.pictureSRC_up = node.picture.picture_up;
@@ -1055,9 +1131,12 @@ Please make sure to accept all file and directory acess permissions shown by the
         this.data.color = argbToRGB(node.color);
         this.data.transparency = node.transparency;
       }
-
       if (node instanceof FieldNode) {
-        this.data.font = node.font
+        this.data.fieldType = node.fieldType;
+      }
+      if (node instanceof FieldNode || node instanceof SliderNode) {
+        this.data.fieldN = node.controllN;
+        this.data.font = node.font;
         this.data.fontSize = node.fontSize;
         this.data.color = argbToRGB(node.color);
         this.data.colorName = this.data.color;
@@ -1065,16 +1144,29 @@ Please make sure to accept all file and directory acess permissions shown by the
         this.data.min = node.min;
         this.data.max = node.max;
       }
+      if (node instanceof CheckboxNode) {
+        this.data.checkBoxN = node.controllN;
+      }
 
       if (node instanceof SliderNode) {
         this.data.color = argbToRGB(node.color);
-        this.data.colorName = this.data.color;
         this.data.color2 = argbToRGB(node.color2);
-        this.data.colorName2 = this.data.color2;
         this.data.vertical = node.vertical;
         this.data.clickable = node.clickable;
         this.data.min = node.min;
         this.data.max = node.max;
+      }
+
+      if (node instanceof CodeviewNode) {
+        this.data.font = node.font;
+        this.data.fontSize = node.fontSize;
+      }
+
+      if (node instanceof ListNode) {
+        this.data.font = node.font;
+        this.data.fontSize = node.fontSize;
+        this.data.color = argbToRGB(node.color);
+        this.data.transparency = node.transparency;
       }
 
       if (node instanceof TabNode) {
@@ -1088,6 +1180,13 @@ Please make sure to accept all file and directory acess permissions shown by the
         this.data.pictureSRC_up = node.picture.picture_up;
         this.data.pictureSRC_down = node.picture.picture_down;
       }
+
+      if (node instanceof LabelNode) {
+        this.data.font = node.font;
+        this.data.fontSize = node.fontSize;
+        this.data.value = node.value;
+      }
+
     } else if (this.selectedNodes.length > 1 && this.areSelectedElementsSimilar()){
       this.data.controllType = this.selectedNodes[0].constructor.name;
       this.data.controllTypeName = this.data.controllType
@@ -1102,13 +1201,23 @@ Please make sure to accept all file and directory acess permissions shown by the
       this.data.picN = getSimilarProperty(this.selectedNodes, "picN");
       this.data.layerN = getSimilarProperty(this.selectedNodes, "layerN");
       this.data.parentN = getSimilarProperty(this.selectedNodes, "parentN");
-      this.data.controllN = getSimilarProperty(this.selectedNodes, "controllN");
+      //this.data.controllN = getSimilarProperty(this.selectedNodes, "controllN");
+
+
+      this.data.buttonN = getSimilarProperty(this.selectedNodes, "buttonN");
+      this.data.ledN = getSimilarProperty(this.selectedNodes, "ledN");
+      this.data.fieldN = getSimilarProperty(this.selectedNodes, "fieldN");
+      this.data.checkBoxN = getSimilarProperty(this.selectedNodes, "checkBoxN");
+      
       this.data.align = getSimilarProperty(this.selectedNodes, "align");
       this.data.toggle = getSimilarProperty(this.selectedNodes, "toggle");
       this.data.blink = getSimilarProperty(this.selectedNodes, "blink");
       this.data.min = getSimilarProperty(this.selectedNodes, "min");
       this.data.max = getSimilarProperty(this.selectedNodes, "max");
       this.data.transparency = getSimilarProperty(this.selectedNodes, "transparency");
+      this.data.value = getSimilarProperty(this.selectedNodes, "value");
+      this.data.fieldType = getSimilarProperty(this.selectedNodes, "fieldType");
+
     }else{
       this.data.controllType = null
     }
@@ -1133,11 +1242,13 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.h = this.data.h;
             
       if (node instanceof ButtonNode) {
+        node.controllN = this.data.buttonN;
         node.picN = this.data.picN;
         node.toggle = this.data.toggle;
       }
 
       if (node instanceof LedNode) {
+        node.controllN = this.data.ledN;
         node.picN = this.data.picN;
         node.blink = this.data.blink;
       }
@@ -1153,10 +1264,15 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
 
       if (node instanceof FieldNode) {
+        node.fieldType = this.data.fieldType;
+        node.controllN = this.data.fieldN;
         node.font = this.data.font;
         node.fontSize = this.data.fontSize;
         node.color = RGBToargb(this.data.color);
         node.align = this.data.align;
+      }
+      if (node instanceof CheckboxNode) {
+        node.controllN = this.data.checkBoxN;
       }
 
       if (node instanceof SliderNode) {
@@ -1173,6 +1289,24 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.align = this.data.align;
         node.picN = this.data.picN;
         node.parentN = this.data.parentN;
+      }
+
+      if (node instanceof CodeviewNode) {
+        node.font = this.data.font;
+        node.fontSize = this.data.fontSize;
+      }
+
+      if (node instanceof ListNode) {
+        node.font = this.data.font;
+        node.fontSize = this.data.fontSize;
+        node.color =  RGBToargb(this.data.color);
+        node.transparency = this.data.transparency;
+      }
+
+      if (node instanceof LabelNode) {
+        node.font = this.data.font;
+        node.fontSize = this.data.fontSize;
+        node.value = this.data.value;
       }
       
     } else if (this.selectedNodes.length > 1){
@@ -1204,11 +1338,13 @@ Please make sure to accept all file and directory acess permissions shown by the
         if (this.data.parentN !== null && node.parentN !== null)
         node.parentN = this.data.parentN;
 
+        if (this.data.value !== null && node.value !== null)
+        node.value = this.data.value;
       })
     }
   }
   
-  parse(text){
+  parse(text, pendingSave = false){
     this.clearAll()
     
 
@@ -1220,7 +1356,7 @@ Please make sure to accept all file and directory acess permissions shown by the
     setTimeout(() => {
       this.form.onChange();
       this.saveHistorySnapshot()
-      this.pendingSave = false;
+      this.pendingSave = pendingSave;
     }, 100);
   
   }
@@ -1234,7 +1370,7 @@ Please make sure to accept all file and directory acess permissions shown by the
    * @param {string|null} controllName 
    * @param {CNode[]} nodes 
    */
-  renderControls(controllName, nodes, container){
+  async renderControls(controllName, nodes, container){
     if (!controllName) return;
 
     var f = document.createElement("div");
@@ -1329,19 +1465,15 @@ Please make sure to accept all file and directory acess permissions shown by the
 
           if (this.dirHandle) {
             var filename2 = Text.fileFullName(pictures[node.picN].picture_down);
-            this.dirHandle.getFileHandle(filename2).then(/** @param {File} file*/fileHandle=>{
+            FileHelpers.getDirectoryFileHandle(this.dirHandle, filename2).then(fileHandle=>{
               node.picture.picture_down_handle = fileHandle;
+            }).catch(err=>{
+              console.error(err);
             })
             var filename1 = Text.fileFullName(pictures[node.picN].picture_up);
-            this.dirHandle.getFileHandle(filename1).then(/** @param {File} file*/fileHandle=>{
-              node.picture.picture_up_handle = fileHandle;
-              return fileHandle.getFile()
-            }).then(file=>{
-              var reader = new FileReader()
-              reader.onload = (e)=>{
-                el.style.backgroundImage = `url(${e.target.result})`;
-              }
-              reader.readAsDataURL(file);
+            FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename1).then(ret=>{
+              node.picture.picture_up_handle = ret.fileHandle;
+              el.style.backgroundImage = `url(${ret.contents})`;
             }).catch(err=>{
               console.error(err);
             })
@@ -1451,7 +1583,7 @@ Please make sure to accept all file and directory acess permissions shown by the
           //tab visisble
         }
 
-        if (node instanceof CheckboxNode) {
+        if (node instanceof CheckboxNode || node instanceof ColorNode) {
           el.textContent = "";
         }
 
@@ -1510,6 +1642,14 @@ var template = `
     <!--<div class="close-button"><button type="button" onlclick="this.onCloseWelcomeClicked()" class="btn btn-danger">X</button></div>-->
     <div class="mb-4 mt-2">
       Welcome to UCCNC Screen Editor by Eldar Gerfanov
+    </div>
+
+    <div class="mb-1" [if]="this.LastSession">
+      <div class="text-danger" [if]="this.pendingSave">Warning, your last session was not saved to the disc!</div>
+      Restore your last session on this computer:
+    </div>
+    <div class="mb-1" [if]="this.LastSession">
+      <button type="button" class="btn btn-xl btn-primary" onclick="this.onRestoreSessionClicked()"><i class="fas fa-folder-open"></i> Restore Last Session</button>
     </div>
 
     <div class="mb-1">
@@ -1610,3 +1750,24 @@ function copyInstance(original){
   );
 }
 
+function getButtonsDropDown(srcItems){
+  var buttons = Objects.copy(srcItems);
+  var items = [];
+  Objects.forEach(buttons, button=>{
+    var matches = button.value.match(/^(\d+)-(\d+)$/);
+    if (matches){
+      //explde the following value: 123-345 into multiple items
+      let i = 0, s=Number(matches[1]), e=Number(matches[2]);
+
+      for (i=s; i<=e; i++) {
+        //fix title according to current index offset
+        var newtitle = button.title.replace(/(\d+)to\d+$/,(a,b,c)=> ""+(Number(b)+i-s).toString());
+
+        items.push({ value: i, title: newtitle, text: button.text })
+      }
+    } else {
+      items.push({ value: button.value, title: button.title, text: button.text })
+    }
+  })
+  return items;
+}
