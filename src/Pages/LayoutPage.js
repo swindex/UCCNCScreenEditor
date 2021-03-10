@@ -204,6 +204,7 @@ export class LayoutPage extends HeaderPage {
 
   async reRender(){
     this.pictures = Objects.filter(this.parser.getNodes(), n=> (n instanceof PictureNode && n.region == this.data.controller ))
+    
     this.pictures.sort(function(a,b){
       return a.controllN - b.controllN
     })
@@ -575,19 +576,12 @@ export class LayoutPage extends HeaderPage {
   }
 
   async onEditPictureListClicked(){
-    var p = Injector.Nav.push(new PictureListEditor);
+    var p = Injector.Nav.push(new PictureListEditor(this.dirHandle));
     p.gallery.items = await this.getCurrentPictureList();
     p.pictures = this.pictures;
-    p.container = this.selectedNodes[0]?.container || 'AC3';
+    p.container = this.selectedNodes[0]?.container || 'AS3';
     p.region = this.data.controller;
-
-    /** @type {SetBitmapFolderNode} */
-    var BMPFolder = this.parser.getNodes().find(f=>f instanceof SetBitmapFolderNode && f.region ==p.region );
-
-    if (BMPFolder) {
-      p.BMPFolder = BMPFolder.path
-    }
-
+    
     p.onAddPicture = (pic)=>{
       this.parser.insertNewNode(pic);
     }
@@ -599,6 +593,7 @@ export class LayoutPage extends HeaderPage {
     }
     p.onDestroy = ()=>{
       this.reRender();
+      this.saveHistorySnapshot();
     }
   }
 
@@ -713,8 +708,8 @@ export class LayoutPage extends HeaderPage {
 
   async onLoadScreensetClicked(){
     ConfirmButtons(`When prompted, please do the following:\n
-Select the Screenset File: C:/UCCNC/Screens/ScreenSetName.ssf\n
-Select the Directory with screenset image files such as: C:/UCCNC/Flashscreen/BMP/ScreenSetName\n
+Select the Screenset file: C:/UCCNC/Screens/ScreenSetName.ssf\n
+Select the Flashscreen directory with all screenset image files such as: C:/UCCNC/Flashscreen/\n
 Please make sure to accept all file and directory acess permissions shown by the browser!`, "Please Read!", { Cancel: null, OK: async ()=>{
       try {
         var [fileHandle] = await window.showOpenFilePicker();
@@ -1050,8 +1045,8 @@ Please make sure to accept all file and directory acess permissions shown by the
     var items = []
     var promises = [];
     Objects.forEach(pics, picture=>{
-      var filename1 = Text.fileFullName(picture.picture_up);
-      var filename2 = Text.fileFullName(picture.picture_down);
+      var filename1 = picture.picture_up;
+      var filename2 = picture.picture_down;
       var ret1 = {
         picN: picture.controllN,
         picture: picture,
@@ -1062,10 +1057,12 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
       
       if (this.dirHandle) {
+        if (filename1)
         promises.push(FileHelpers.getDirectoryFileContents(this.dirHandle, filename1).then(contents=>{
           ret1.picture_up = contents;
         }).catch(err=>console.error(err)));
 
+        if (filename2)
         promises.push(FileHelpers.getDirectoryFileContents(this.dirHandle, filename2).then(contents=>{
           ret1.picture_down = contents;
         }).catch(err=>console.error(err)));
@@ -1243,7 +1240,13 @@ Please make sure to accept all file and directory acess permissions shown by the
             
       if (node instanceof ButtonNode) {
         node.controllN = this.data.buttonN;
-        node.picN = this.data.picN;
+        node.picN = this.data.picN !== "" ? this.data.picN : null;
+        if (node.picN === null) {
+          //clear picture at this point
+          node.picture = new PictureNode()
+          node.picture.container = node.container;
+          node.picture.region = node.region;
+        }
         node.toggle = this.data.toggle;
       }
 
@@ -1459,28 +1462,33 @@ Please make sure to accept all file and directory acess permissions shown by the
         el.classList.add(node.constructor.name);
 
 
-        if ((node instanceof BackgroundNode || node instanceof LedNode || node instanceof ButtonNode || node instanceof TabNode) && node.picN !== null && pictures[node.picN]){
-                    
-          node.picture = pictures[node.picN];
-
-          if (this.dirHandle) {
-            var filename2 = Text.fileFullName(pictures[node.picN].picture_down);
-            FileHelpers.getDirectoryFileHandle(this.dirHandle, filename2).then(fileHandle=>{
-              node.picture.picture_down_handle = fileHandle;
-            }).catch(err=>{
-              console.error(err);
-            })
-            var filename1 = Text.fileFullName(pictures[node.picN].picture_up);
-            FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename1).then(ret=>{
-              node.picture.picture_up_handle = ret.fileHandle;
-              el.style.backgroundImage = `url(${ret.contents})`;
-            }).catch(err=>{
-              console.error(err);
-            })
+        if ((node instanceof BackgroundNode || node instanceof LedNode || node instanceof ButtonNode || node instanceof TabNode)){
+          if (node.picN == null || !pictures[node.picN]){
+            node.picture = new PictureNode()
+            node.picture.container = node.container;
+            node.picture.region = node.region;
           } else {
-            el.style.backgroundImage = `url(UCCNC/${pictures[node.picN].picture_up})`;
-          }
+                      
+            node.picture = pictures[node.picN];
 
+            if (this.dirHandle) {
+              var filename2 = pictures[node.picN].picture_down;// Text.fileFullName(pictures[node.picN].picture_down);
+              FileHelpers.getDirectoryFileHandle(this.dirHandle, filename2).then(fileHandle=>{
+                node.picture.picture_down_handle = fileHandle;
+              }).catch(err=>{
+                console.error(err);
+              })
+              var filename1 = pictures[node.picN].picture_up ;//Text.fileFullName(pictures[node.picN].picture_up);
+              FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename1).then(ret=>{
+                node.picture.picture_up_handle = ret.fileHandle;
+                el.style.backgroundImage = `url(${ret.contents})`;
+              }).catch(err=>{
+                console.error(err);
+              })
+            } else {
+              el.style.backgroundImage = `url(UCCNC/${pictures[node.picN].picture_up})`;
+            }
+          }
           el.style.border = "none"
         } else {
           el.textContent = node.constructor.name;

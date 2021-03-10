@@ -7,7 +7,7 @@ import { DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
 import { ButtonNode } from "../Parser";
 import { Text } from "leet-mvc/core/text";
 import { Storage } from "leet-mvc/core/storage";
-import { Prompt } from "leet-mvc/core/simple_confirm";
+import { Alert, Confirm, Prompt } from "leet-mvc/core/simple_confirm";
 import { FileHelpers } from "../FileHelpers";
 
 
@@ -214,7 +214,10 @@ export class EditorPage extends DialogPage {
         this.onSaveButtonClicked();
 
         return false;
-      }
+      },
+      /*"Save Into..":()=>{
+        this.onSaveIntoButtonClicked();
+      }*/
     }
 
     //imageElem = document.getElementById('image');
@@ -341,6 +344,27 @@ drawButton_down(ctx, isToggleOn = false){
   async onSaveButtonClicked(){
     if (!this.form.validator.validate())
       return;
+
+    if (this.button.picture.picture_up_handle && !await new Promise ((resolve)=>Confirm(`Overwrite existing image files?`, ()=>resolve(true),"Are you sure?"))){
+      return;
+    }
+
+    if (this.button.picture.picture_up_handle){
+      await  FileHelpers.saveCanvasToFileHandle(this.cn_b_up.canvas, this.button.picture.picture_up_handle)
+    } else {
+      downloadFile(this.cn_b_up.canvas, this.data.buttonBaseFileName + "_up.png");
+    }
+
+    if (this.button.picture.picture_down_handle){
+      await  FileHelpers.saveCanvasToFileHandle(this.cn_b_down.canvas, this.button.picture.picture_down_handle)
+    } else {
+      downloadFile(this.cn_b_down.canvas, this.data.buttonBaseFileName + "_down.png");
+    }
+  }
+
+  /*async onSaveIntoButtonClicked(){
+    if (!this.form.validator.validate())
+      return;
     if (this.button.picture.picture_up_handle){
       await FileHelpers.saveCanvasToFileHandle(this.cn_b_up.canvas, this.button.picture.picture_up_handle)
     } else {
@@ -352,7 +376,7 @@ drawButton_down(ctx, isToggleOn = false){
     } else {
       downloadFile(this.cn_b_down.canvas, this.data.buttonBaseFileName + "_down.png");
     }
-  }
+  }*/
 
   parse(text){
     this.parser.parse(text);

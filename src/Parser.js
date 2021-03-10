@@ -695,7 +695,7 @@ export class ButtonNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*|null)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new ButtonNode();
@@ -705,7 +705,7 @@ export class ButtonNode extends ControlNode{
     ret.w = Number(m.groups.w);
     ret.h = Number(m.groups.h);
     ret.layerN = Number(m.groups.layerN);
-    ret.picN = Number(m.groups.picN);
+    ret.picN = m.groups.picN !== 'null' ? Number(m.groups.picN) : null;
     ret.controllN = Number(m.groups.controllN);
     ret.blink = s2b(m.groups.blink);
     ret.toggle = s2b(m.groups.toggle);

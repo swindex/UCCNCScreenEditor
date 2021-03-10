@@ -6,7 +6,11 @@ import { FileHelpers } from "../FileHelpers";
 import { PictureNode } from "../Parser";
 
 export class PictureListEditor extends DialogPage {
-  constructor(){
+  /**
+   * 
+   * @param { FileSystemDirectoryHandle} dirHandle 
+   */
+  constructor(dirHandle){
     super();
 
     this.region = null;
@@ -17,19 +21,27 @@ export class PictureListEditor extends DialogPage {
     /** @type {string|null} */
     this.BMPFolder = null;
 
-    this.gallery.onPictureUpSelect = (item, index)=>{
-      FileHelpers.selectFileFromDiskGetContents().then(ret=>{
-        item.picture_up = ret.contents;
-        item.picture_up_name =  ret.file.name;
-        item.picture.picture_up = this.BMPFolder + ret.file.name;
-      })
+    this.gallery.onPictureUpSelect = async (item, index)=>{
+      var fileItem = await FileHelpers.selectFileFromDirectoryHandle(dirHandle, "Select UP image file")
+      if (!fileItem) return;
+
+      var fileContents = await FileHelpers.getFileHandleContents(fileItem.handle);
+      if(!fileContents) return;
+
+      item.picture_up = fileContents.contents;
+      item.picture_up_name = fileItem.path + "/" + fileContents.file.name; 
+      item.picture.picture_up = item.picture_up_name;
     }
-    this.gallery.onPictureDownSelect = (item, index)=>{
-      FileHelpers.selectFileFromDiskGetContents().then(ret=>{
-        item.picture_down = ret.contents;
-        item.picture_down_name =  ret.file.name;
-        item.picture.picture_down = this.BMPFolder + ret.file.name;
-      })
+    this.gallery.onPictureDownSelect = async (item, index)=>{
+      var fileItem = await FileHelpers.selectFileFromDirectoryHandle(dirHandle, "Select DOWN image file")
+      if (!fileItem) return;
+
+      var fileContents = await FileHelpers.getFileHandleContents(fileItem.handle);
+      if(!fileContents) return;
+
+      item.picture_down = fileContents.contents;
+      item.picture_down_name =  fileItem.path + "/" + fileContents.file.name;
+      item.picture.picture_down = item.picture_down_name; 
     }
 
     this.gallery.onPictureUpRemove = (item, index)=>{

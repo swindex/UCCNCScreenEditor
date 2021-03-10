@@ -46,7 +46,17 @@ module.exports = (env) => {
         publicPath: mode != "production" ? '/' : 'https://snapwebapps.com/uccnceditor/',
       },
       mode: mode,
-      plugins: plugins
+      plugins: plugins,
+      module:{
+        rules:[
+          {
+            // Include ts
+            test: /\.ts$/,
+            exclude: /node_modules/,
+            loader: 'babel-loader',
+          },
+        ]
+      }
     }
   );
 

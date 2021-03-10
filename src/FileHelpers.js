@@ -1,3 +1,6 @@
+import { Injector } from "leet-mvc/core/Injector";
+import { FileSystemFilePicker } from "./Pages/FileSystemFilePicker/FileSystemFilePicker";
+
 export const FileHelpers = {
   verifyPermission(fileHandle, readWrite = false) {
     const options = {};
@@ -39,9 +42,30 @@ export const FileHelpers = {
     }
   },
 
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} dirHandle 
+   * @param {string} fileName 
+   */
   async getDirectoryFileHandle(dirHandle, fileName){
-    if (await FileHelpers.verifyPermission(dirHandle, true))
-      return await dirHandle.getFileHandle(fileName);
+    if (! await FileHelpers.verifyPermission(dirHandle, true)) {
+      return;
+    }
+
+    var parts = fileName.split(/\/|\\/);
+    var curDirHandle = dirHandle;
+    var filehandle = null;
+    for (var i in parts){
+      let name = parts[i];
+      if (Number(i) < parts.length-1) {
+        curDirHandle = await curDirHandle.getDirectoryHandle(name);
+      } else {
+        filehandle = await curDirHandle.getFileHandle(name);
+      }
+    }
+    
+
+    return filehandle;
   },
 
   /**
@@ -54,7 +78,7 @@ export const FileHelpers = {
     if (! await FileHelpers.verifyPermission(dirHandle, true)){
       throw new Error("Permission to read files not given")
     }
-    var fileHandle = await dirHandle.getFileHandle(fileName);
+    var fileHandle = await FileHelpers.getDirectoryFileHandle(dirHandle, fileName);
     var file = await fileHandle.getFile();
     var reader = new FileReader()
 
@@ -71,7 +95,7 @@ export const FileHelpers = {
       throw new Error("Permission to read files not given")
     }
 
-    var fileHandle = await dirHandle.getFileHandle(fileName);
+    var fileHandle = await FileHelpers.getDirectoryFileHandle(dirHandle, fileName);
     var file = await fileHandle.getFile();
     var reader = new FileReader()
 
@@ -96,5 +120,32 @@ export const FileHelpers = {
       }
       reader.readAsDataURL(file);
     })
+  },
+
+  /**
+   * @return {Promise<{fileHandle:any, file:File, contents: string | ArrayBuffer}>}
+   */
+  async getFileHandleContents(fileHandle){
+   
+    var file = await fileHandle.getFile();
+    var reader = new FileReader();
+    return new Promise(function(resolve){
+      reader.onload = (e)=>{
+        resolve({fileHandle, file, contents: e.target.result})
+      }
+      reader.readAsDataURL(file);
+    })
+  },
+
+  /**
+
+   */
+  async selectFileFromDirectoryHandle(dirHandle, title){
+    var p = Injector.Nav.push(new FileSystemFilePicker(dirHandle, title));
+    return new Promise(function(resolve, reject){
+      p.onFileSelected = (item) => resolve(item);
+      p.onCancelClicked = () => reject();
+    })
+
   }
 }
