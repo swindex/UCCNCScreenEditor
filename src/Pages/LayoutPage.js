@@ -7,7 +7,7 @@ import "./LayoutPage.scss";
 import * as donatecode from "./donatecode.html";
 import { Text } from "leet-mvc/core/text";
 import { round } from "leet-mvc/core/helpers";
-import { Alert, Confirm, ConfirmButtons } from "leet-mvc/core/simple_confirm";
+import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_confirm";
 import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
@@ -92,17 +92,17 @@ export class LayoutPage extends HeaderPage {
       { type:"select", name:"fieldType", title:"Fild Type", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name}`, validateRule:"required", class:"", items: Objects.copy(FieldTypes)},
 
       { type:"text", title:"Control Number", name:"controllN", displayRule:`true_if:controllType,${ListNode.name},${ColorNode.name}` },
-      { type:"function-select", title:"Button Number", name:"buttonN", validateRule:"required|numeric", displayRule:`true_if:controllType,${ButtonNode.name}`, items: getButtonsDropDown(ButtonNumbers), attributes:{showItemsOnFocus:true} },
-      { type:"function-select", title:"Led Number", name:"ledN", validateRule:"required|numeric", displayRule:`true_if:controllType,${LedNode.name}`, items: getButtonsDropDown(LedNumbers), attributes:{showItemsOnFocus:true} },
-      { type:"function-select", title:"Field Number", name:"fieldN", validateRule:"required|numeric", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items: getButtonsDropDown(FieldNumbers), attributes:{showItemsOnFocus:true} },
-      { type:"function-select", title:"Checkbox Number", name:"checkBoxN", validateRule:"required|numeric", displayRule:`true_if:controllType,${CheckboxNode.name}`, items: getButtonsDropDown(CheckBoxNumbers), attributes:{showItemsOnFocus:true} },
-      { type:"number", title:"Parent Layer Number", name:"parentN", displayRule:`true_if:controllType,${BackgroundNode.name},${TabNode.name}`, validateRule:"required|numeric" },
+      { type:"function-select", title:"Button Number", name:"buttonN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${ButtonNode.name}`, items: getButtonsDropDown(ButtonNumbers), attributes:{showItemsOnFocus:true} },
+      { type:"function-select", title:"Led Number", name:"ledN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${LedNode.name}`, items: getButtonsDropDown(LedNumbers), attributes:{showItemsOnFocus:true} },
+      { type:"function-select", title:"Field Number", name:"fieldN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items: getButtonsDropDown(FieldNumbers), attributes:{showItemsOnFocus:true} },
+      { type:"function-select", title:"Checkbox Number", name:"checkBoxN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${CheckboxNode.name}`, items: getButtonsDropDown(CheckBoxNumbers), attributes:{showItemsOnFocus:true} },
+      { type:"number", title:"Parent Layer Number", name:"parentN", displayRule:`true_if:controllType,${BackgroundNode.name},${TabNode.name}`, validateRule:"required|numeric|min:0" },
       { type:"number", title:"Layer Number", name:"layerN", validateRule:"numeric|min:0|max:49"},
       { type:"form", class:"row", items:[
         { type:"number", name:"x", title:"X", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
         { type:"number", name:"y", title:"Y", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
-        { type:"number", name:"w", title:"Width", placeholder:"", displayRule:`true_if_not:controllType,${LabelNode.name},${CheckboxNode.name}`, validateRule:"required|numeric", class:"col-6", unit:"px"},
-        { type:"number", name:"h", title:"Height", placeholder:"", displayRule:`true_if:controllType,${ButtonNode.name},${BackgroundNode.name},${UCCAMNode.name},${ListNode.name},${LedNode.name},${ToolpathNode.name},${TabNode.name},${FillNode.name}`, validateRule:"required|numeric", class:"col-6", unit:"px"},
+        { type:"number", name:"w", title:"Width", placeholder:"", displayRule:`true_if_not:controllType,${LabelNode.name},${CheckboxNode.name}`, validateRule:"required|numeric|min:0", class:"col-6", unit:"px"},
+        { type:"number", name:"h", title:"Height", placeholder:"", displayRule:`true_if:controllType,${ButtonNode.name},${BackgroundNode.name},${UCCAMNode.name},${ListNode.name},${LedNode.name},${ToolpathNode.name},${TabNode.name},${FillNode.name}`, validateRule:"required|numeric|min:0", class:"col-6", unit:"px"},
       ]},
       { type:"form", class:"row", items:[
         { type:"checkbox", name:"toggle", title:"Toggle", displayRule:"true_if:controllType,"+ButtonNode.name+"", value: false, class:"col-6"},
@@ -114,7 +114,7 @@ export class LayoutPage extends HeaderPage {
       ]},
       
       { type:"form", class:"", displayRule:`true_if:controllType,${ButtonNode.name},${BackgroundNode.name},${LedNode.name},${TabNode.name}`, items:[
-        { type:"picture-select", name:"picN", title:"Picture Number", placeholder:"", validateRule:"numeric"},
+        { type:"picture-select", name:"picN", title:"Picture Number", placeholder:"", validateRule:"numeric|min:0"},
         { type:"text", title:"Picture Up", name:"pictureSRC_up", attributes:{disabled:true}},
         { type:"text", title:"Picture Down", name:"pictureSRC_down", attributes:{disabled:true}},
       ]},
@@ -126,7 +126,7 @@ export class LayoutPage extends HeaderPage {
 
       { type:"form", class:"row", displayRule:`true_if:controllType,${FieldNode.name},${ListNode.name},${TabNode.name},${CodeviewNode.name},${LabelNode.name}`, items:[
         { type:"select", name:"font", title:"Font Name", placeholder:"", validateRule:"required", class:"col-6", items: Objects.copy(FontsList)},
-        { type:"number", name:"fontSize", title:"Font Size", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
+        { type:"number", name:"fontSize", title:"Font Size", placeholder:"", validateRule:"required|numeric|min:1", class:"col-6", unit:"px"},
       ]}, 
      
       { type:"form", class:"row", displayRule:`true_if:controllType,${LabelNode.name}`, items:[
@@ -483,9 +483,8 @@ export class LayoutPage extends HeaderPage {
       var newNode = copyInstance(node);
       newNode.x += 10;
       newNode.y += 10;
-      var index = Objects.findIndex(this.parser.nodes, n=>n == node);
-      //Insert Node
-      this.parser.nodes.splice(index+1,0, newNode);
+
+      this.parser.insertNewNode(newNode)
       //Insert node filter
       if (newNode.filterField){
         //this.parser.nodes.splice(index+1,0, newNode.filterField);
@@ -1065,7 +1064,10 @@ Please make sure to accept all file and directory acess permissions shown by the
         if (filename2)
         promises.push(FileHelpers.getDirectoryFileContents(this.dirHandle, filename2).then(contents=>{
           ret1.picture_down = contents;
-        }).catch(err=>console.error(err)));
+        }).catch(err=>{
+          console.error(filename2);
+          console.error(err);
+        }));
 
       } else {
         ret1.picture_up = `UCCNC/${picture.picture_up}`
@@ -1636,6 +1638,16 @@ Please make sure to accept all file and directory acess permissions shown by the
     });
   }
 
+  onShowEmailClicked(){
+    var p1="support@"
+    var p2="zero-divide"
+    var p3="net"
+    
+    Prompt("Forward all your inquiries to this email address:", ()=>{
+      window.open(`mailto:${p1}${p2}.${p3}`, "new");
+    }, "Contact Us",`${p1}${p2}.${p3}`);
+  }
+
   get template (){
     return super.extendTemplate(super.template, template);
   }
@@ -1678,6 +1690,10 @@ var template = `
 
     <div class="mb-1">
       Brought to you by<br><a href= "https://hsmadvisor.com" target="new"><img src="https://hsmadvisor.com/uploads/HSMAdvisor_LOGO_Small.png"></a><br>Speed And Feed Calculator for Professional CNC Programmers and Machinists. 
+    </div>
+
+    <div class="mb-1">
+      For questions or suggestions: <span class="link" onclick="this.onShowEmailClicked()">show email</span>
     </div>
 
     <div class="m-3 text-center">
@@ -1728,6 +1744,9 @@ var template = `
       <div><b>Ctrl + LeftMouse</b> to select multiple items</div>
       <div><b>Shift + LeftMouse</b> to drag/resize items</div>
       <div><b>Alt + LeftMouse</b> to select Fill</div>
+      <div class="mb-1">
+        Contact us: <span class="link" onclick="this.onShowEmailClicked()">show email</span>
+      </div>
     </div>
   </div>
 </div>

@@ -348,7 +348,7 @@ export class TabNode extends ControlNode {
   /** @return {TabNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addtab\s*\(\s*"(?<firstEmpty>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*"(?<font>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*"(?<align>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<n24>\d*)\s*,\s*(?<n0>\d*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<picN>\d*)\s*,\s*(?<layerN>\d*)\s*,\s*(?<parentN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addtab\s*\(\s*"(?<firstEmpty>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*"(?<font>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*"(?<align>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<n24>\d*)\s*,\s*(?<n0>\d*)\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<picN>\d*)\s*,\s*(?<layerN>\d*)\s*,\s*(?<parentN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new TabNode()
@@ -390,7 +390,7 @@ export class ListNode extends ControlNode {
   /** @return {ListNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addlist\s*\(\s*"(?<font>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*"(?<align>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[\-\d]*)\s*,\s*(?<nm1>[\-\d]*)\s*,\s*(?<transparency>[\.\d]*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addlist\s*\(\s*"(?<font>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*"(?<align>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[\-\d]*)\s*,\s*(?<nm1>[\-\d]*)\s*,\s*(?<transparency>[\.\d]*)\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new ListNode()
@@ -431,7 +431,7 @@ export class ComboNode extends ControlNode {
   /** @return {ComboNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addcombobox\s*\(\s*"(?<font>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[\-\d]*)\s*,\s*(?<n6>[\-\d]*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addcombobox\s*\(\s*"(?<font>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[\-\d]*)\s*,\s*(?<n6>[\-\d]*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new ComboNode()
@@ -479,7 +479,7 @@ export class FieldNode extends ControlNode {
   /** @return {FieldNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addfield\s*\(\s*"(?<firstEmpty>[^,]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*"(?<fieldType>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<min>[^,]*)\s*,\s*(?<max>[^,]*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addfield\s*\(\s*"(?<firstEmpty>[^,]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*"(?<fieldType>[a-zA-Z0-9/\._\-\&\(\)\s]*)"\s*,\s*(?<min>[^,]*)\s*,\s*(?<max>[^,]*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new FieldNode()
@@ -524,7 +524,7 @@ export class SliderNode extends ControlNode {
   /** @return {SliderNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addslider\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<color2>[^,]*)\s*,\s*(?<min>[^,]*)\s*,\s*(?<max>[^,]*)\s*,\s*(?<vertical>true|false)\s*,\s*(?<clickable>true|false)\s*,\s*(?<fieldN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addslider\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<color2>[^,]*)\s*,\s*(?<min>[^,]*)\s*,\s*(?<max>[^,]*)\s*,\s*(?<vertical>true|false)\s*,\s*(?<clickable>true|false)\s*,\s*(?<fieldN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new SliderNode()
@@ -573,7 +573,7 @@ export class LabelNode extends ControlNode {
   /** @return {LabelNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addlabel\s*\(\s*"(?<value>[^"]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addlabel\s*\(\s*"(?<value>[^"]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new LabelNode()
@@ -612,7 +612,7 @@ export class CodeviewNode extends ControlNode {
   /** @return {CodeviewNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addcodeview\s*\(\s*"(?<value>[^,]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addcodeview\s*\(\s*"(?<value>[^,]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*"(?<align>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<color>[^,]*)\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new CodeviewNode()
@@ -654,7 +654,7 @@ export class CheckboxNode extends ControlNode {
   /** @return {CheckboxNode|null} */
   static parse(cCode = ""){
     if (!cCode) return null;
-    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addcheckbox\s*\(\s*"(?<firstEmpty>[^,]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<n0>[^,]*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
+    var m = cCode.match(/^(?<container>AS3|AS3jog)\.Addcheckbox\s*\(\s*"(?<firstEmpty>[^,]*)"\s*,\s*"(?<font>[^,]*)"\s*,\s*(?<fontSize>\d*)\s*,\s*(?<n0>[^,]*)\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*/)
     if (!m) return null
 
     var ret = new CheckboxNode()
@@ -695,7 +695,7 @@ export class ButtonNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*|null)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*|null)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new ButtonNode();
@@ -736,7 +736,7 @@ export class LedNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addled\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addled\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new LedNode();
@@ -770,7 +770,7 @@ export class ColorNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addcolorpick\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addcolorpick\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new ColorNode();
@@ -801,7 +801,7 @@ export class UCCAMNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.AddUCCAM\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.AddUCCAM\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<controllN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new UCCAMNode();
@@ -1015,7 +1015,7 @@ export class ToolpathNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addtoolpath\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addtoolpath\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new ToolpathNode();
@@ -1050,7 +1050,7 @@ export class BackgroundNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbackground\s*\(\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<picN>\d*)\s*,\s*(?<parentN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbackground\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<picN>\d*)\s*,\s*(?<parentN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new BackgroundNode();
@@ -1086,7 +1086,7 @@ export class FillNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addfill\s*\(\s*(?<color>-\d*)\s*,\s*(?<x>\d*)\s*,\s*(?<y>\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<transparency>[\d\.]*)\s*,\s*(?<n1>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addfill\s*\(\s*(?<color>\-?\d*)\s*,\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<transparency>[\d\.]*)\s*,\s*(?<n1>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new FillNode();

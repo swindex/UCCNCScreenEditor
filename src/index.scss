@@ -19,6 +19,16 @@ body,html{
 .page-DialogPage .row {
   //max-width: 430px !important;
 }
+.link {
+  color: #3b3bf0;
+  text-decoration: underline;
+  &:hover {
+    text-decoration: none;
+  }
+  &:active {
+    font-weight: bold;
+  }
+}
 @import "bootstrap-4-grid/scss/grid.scss";
 
 @import "leet-mvc/scss/buttons.scss";
