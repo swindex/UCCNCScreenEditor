@@ -96,8 +96,8 @@ export class LayoutPage extends HeaderPage {
       { type:"function-select", title:"Led Number", name:"ledN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${LedNode.name}`, items: getButtonsDropDown(LedNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Field Number", name:"fieldN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items: getButtonsDropDown(FieldNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Checkbox Number", name:"checkBoxN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${CheckboxNode.name}`, items: getButtonsDropDown(CheckBoxNumbers), attributes:{showItemsOnFocus:true} },
-      { type:"number", title:"Parent Layer Number", name:"parentN", displayRule:`true_if:controllType,${BackgroundNode.name},${TabNode.name}`, validateRule:"required|numeric|min:0" },
-      { type:"number", title:"Layer Number", name:"layerN", validateRule:"numeric|min:0|max:49"},
+      { type:"number", title:"Parent Tab Layer Number", name:"parentN", displayRule:`true_if:controllType,${TabNode.name}`, validateRule:"required|numeric|min:0" },
+      { type:"number", title:"Layer Number", name:"layerN", validateRule:"numeric|min:0"},
       { type:"form", class:"row", items:[
         { type:"number", name:"x", title:"X", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
         { type:"number", name:"y", title:"Y", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
@@ -130,10 +130,10 @@ export class LayoutPage extends HeaderPage {
       ]}, 
      
       { type:"form", class:"row", displayRule:`true_if:controllType,${LabelNode.name}`, items:[
-        { type:"text", name:"value", title:"Label Text", placeholder:"Label Text", validateRule:"", class:"col-12"},
+        { type:"text", name:"value", title:"Label Text", placeholder:"Text", validateRule:"", class:"col-12"},
       ]}, 
 
-      { type:"color-picker", name:"color", title:"Color", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name},${ListNode.name},${SliderNode.name},${FillNode.name}`, validateRule:"required" },
+      { type:"color-picker", name:"color", title:"Color", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name},${ListNode.name},${SliderNode.name},${FillNode.name},${LabelNode.name}`, validateRule:"required" },
       { type:"color-picker", name:"color2", title:"Color 2", placeholder:"", displayRule:"true_if:controllType,"+SliderNode.name, validateRule:"required"},
 
       { type:"number", name:"transparency", title:"Opacity", placeholder:"", displayRule:`true_if:controllType,${ListNode.name},${FillNode.name}`, validateRule:"required|numeric|min:0|max:1", unit:""},
@@ -1121,7 +1121,6 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
       if (node instanceof BackgroundNode) {
         this.data.picN = node.picN
-        this.data.parentN = node.parentN
         this.data.pictureSRC_up = node.picture.picture_up;
         this.data.pictureSRC_down = node.picture.picture_down;
       }
@@ -1184,6 +1183,7 @@ Please make sure to accept all file and directory acess permissions shown by the
         this.data.font = node.font;
         this.data.fontSize = node.fontSize;
         this.data.value = node.value;
+        this.data.color = node.color;
       }
 
     } else if (this.selectedNodes.length > 1 && this.areSelectedElementsSimilar()){
@@ -1260,7 +1260,6 @@ Please make sure to accept all file and directory acess permissions shown by the
 
       if (node instanceof BackgroundNode) {
         node.picN = this.data.picN;
-        node.parentN = this.data.parentN;
       }
 
       if (node instanceof FillNode) {
@@ -1312,6 +1311,7 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.font = this.data.font;
         node.fontSize = this.data.fontSize;
         node.value = this.data.value;
+        node.color = this.data.color;
       }
       
     } else if (this.selectedNodes.length > 1){

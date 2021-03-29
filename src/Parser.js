@@ -1036,7 +1036,7 @@ export class ToolpathNode extends ControlNode{
 export class BackgroundNode extends ControlNode{
   constructor(line) {
     super();
-    this.parentN = 0;
+    this.backgroundN = 0;
 
     this.picN = null;
     /** @type {PictureNode} */
@@ -1050,7 +1050,7 @@ export class BackgroundNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbackground\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<picN>\d*)\s*,\s*(?<parentN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbackground\s*\(\s*(?<x>\-?\d*)\s*,\s*(?<y>\-?\d*)\s*,\s*(?<w>\d*)\s*,\s*(?<h>\d*)\s*,\s*(?<picN>\d*)\s*,\s*(?<backgroundN>\d*)\s*,\s*(?<layerN>\d*)\s*\)\s*;\s*$/)
     if (!m) return null;
 
     var ret = new BackgroundNode();
@@ -1061,13 +1061,14 @@ export class BackgroundNode extends ControlNode{
     ret.h = Number(m.groups.h);
 
     ret.picN = Number(m.groups.picN);
-    ret.parentN = Number(m.groups.parentN);
+    ret.backgroundN = Number(m.groups.backgroundN);
     ret.layerN = Number(m.groups.layerN);
+    ret.backgroundN = ret.layerN //Number(m.groups.backgroundN);
     return ret;    
   }
 
   getCCode(){
-    return `${this.container}.Addbackground(${this.x}, ${this.y}, ${this.w}, ${this.h}, ${this.picN}, ${this.parentN}, ${this.layerN});`
+    return `${this.container}.Addbackground(${this.x}, ${this.y}, ${this.w}, ${this.h}, ${this.picN}, ${this.backgroundN}, ${this.layerN});`
   }
 }
 
