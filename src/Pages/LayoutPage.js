@@ -861,19 +861,28 @@ Please make sure to accept all file and directory acess permissions shown by the
         /** @type {TabNode[]} */
         var tabs = Objects.filter(this.parser.getNodes(), node=> node.region == this.data.controller && node instanceof TabNode )
         //get tabs that belong to the same parent
-        var tabs = Objects.filter(tabs, node=> node.parentN == parentN )
-        Objects.forEach(tabs, tab=>{
-          //remove tab LayerNumber form visible layers array
-          this.visibleLayers = Objects.filter(this.visibleLayers, ln=> ln != tab.layerN ); 
-        })
+        var visibleLayers = [layerN];
+        function addParentToVisible(parentN){
+          var parent = Objects.find(tabs, node=> node.layerN == parentN );
+          //add tab parent
+          if (parent) {
+            visibleLayers.unshift(parent.layerN);
+            if (parent.parentN > 0)
+            addParentToVisible(parent.parentN)
+          }
+        }
+        addParentToVisible(parentN);
+        //add all 1st level tabs
+        /*Objects.forEach(tabs, tab=>{
+          if (tab.parentN == 1) {
+            visibleLayers.unshift(tab.layerN);
+          }
+        })*/
 
+        visibleLayers.unshift(1);
 
-        this.visibleLayers = Objects.filter(this.visibleLayers, ln=> ln <= layerN);
-
-        this.visibleLayers.push(layerN);
-        this.visibleLayers.push(parentN);
-
-        //console.log(this.visibleLayers)
+        this.visibleLayers = visibleLayers;
+        console.log(this.visibleLayers)
 
         /*if (this.mainArea.children[0])
           this.mainArea.children[0].remove();
@@ -1463,6 +1472,12 @@ Please make sure to accept all file and directory acess permissions shown by the
         
         el.classList.add(node.constructor.name);
 
+        var isTabSelected = false;
+        if (node instanceof TabNode) {
+          if ( this.visibleLayers.includes(node.layerN)) {
+            isTabSelected = true;
+          }
+        }
 
         if ((node instanceof BackgroundNode || node instanceof LedNode || node instanceof ButtonNode || node instanceof TabNode)){
           if (node.picN == null || !pictures[node.picN]){
@@ -1475,15 +1490,18 @@ Please make sure to accept all file and directory acess permissions shown by the
 
             if (this.dirHandle) {
               var filename2 = pictures[node.picN].picture_down;// Text.fileFullName(pictures[node.picN].picture_down);
-              FileHelpers.getDirectoryFileHandle(this.dirHandle, filename2).then(fileHandle=>{
-                node.picture.picture_down_handle = fileHandle;
+              FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename2).then(ret=>{
+                node.picture.picture_down_handle = ret.fileHandle;
+                if (node instanceof TabNode && !isTabSelected)
+                  el.style.backgroundImage = `url(${ret.contents})`;
               }).catch(err=>{
                 console.error(err);
               })
               var filename1 = pictures[node.picN].picture_up ;//Text.fileFullName(pictures[node.picN].picture_up);
               FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename1).then(ret=>{
                 node.picture.picture_up_handle = ret.fileHandle;
-                el.style.backgroundImage = `url(${ret.contents})`;
+                if (!(node instanceof TabNode) || isTabSelected)
+                  el.style.backgroundImage = `url(${ret.contents})`;
               }).catch(err=>{
                 console.error(err);
               })
