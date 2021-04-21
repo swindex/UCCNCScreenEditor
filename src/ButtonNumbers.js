@@ -1,4 +1,5 @@
 export const ButtonNumbers = [
+  { value:"0", title:"Nothing", text:"Button that does nothing." },
   { value:"100", title:"ZeroX", text:"Zeros the X axis position." },
   { value:"101", title:"ZeroY", text:"Zeros the Y axis position." },
   { value:"102", title:"ZeroZ", text:"Zeros the Z axis position." },

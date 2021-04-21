@@ -1,4 +1,5 @@
 import { BaseComponent } from "leet-mvc/components/BaseComponent";
+import { DOM } from "leet-mvc/core/DOM";
 import "./PictureGallery.scss";
 
 export class PictureGallery extends BaseComponent {
@@ -57,6 +58,14 @@ export class PictureGallery extends BaseComponent {
    */
   onItemClick(item, index) {
 
+  }
+
+  setSelectedIndex(index){
+    this.selectedIndex = index;
+    this.selectedItem = this.items[index];
+    setTimeout(() => {
+      DOM(this.container).find(".PictureGallery [selected]").first().scrollIntoView();
+    }, 16);
   }
 
   _onItemClick(item, index) {

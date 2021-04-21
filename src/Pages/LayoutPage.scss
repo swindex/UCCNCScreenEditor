@@ -95,6 +95,25 @@
     border-radius: 10px;
     margin: 5px 0;
   }
+  .error-baloon {
+    background-color: #dc3545;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    .error-title {
+      margin-right: 6px;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .clickable {
+      cursor: pointer;
+    }
+    b {
+      
+    }
+  }
   #workarea {
     overflow:scroll;
     width: 100%;

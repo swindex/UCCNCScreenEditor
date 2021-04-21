@@ -11,7 +11,7 @@ import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_con
 import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
-import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode } from "../Parser";
+import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
 import { PictureListEditor } from "./PictureListEditor";
 import { FontsList } from "../Fonts";
@@ -41,6 +41,9 @@ export class LayoutPage extends HeaderPage {
     this.history = [];
 
     this.pendingSave = undefined;
+
+    this.renderErrors = [];
+    this.parseErrors = [];
 
     /** @type {PictureNode[]} */
     this.pictures = [];
@@ -91,7 +94,7 @@ export class LayoutPage extends HeaderPage {
       { type:"text", title:"Control Type", name:"controllTypeName", attributes:{disabled:true}},
       { type:"select", name:"fieldType", title:"Fild Type", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name}`, validateRule:"required", class:"", items: Objects.copy(FieldTypes)},
 
-      { type:"text", title:"Control Number", name:"controllN", displayRule:`true_if:controllType,${ListNode.name},${ColorNode.name}` },
+      { type:"text", title:"Control Number", name:"controllN", displayRule:`true_if:controllType,${ListNode.name},${ColorNode.name},${BackgroundNode.name}` },
       { type:"function-select", title:"Button Number", name:"buttonN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${ButtonNode.name}`, items: getButtonsDropDown(ButtonNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Led Number", name:"ledN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${LedNode.name}`, items: getButtonsDropDown(LedNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Field Number", name:"fieldN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items: getButtonsDropDown(FieldNumbers), attributes:{showItemsOnFocus:true} },
@@ -161,6 +164,7 @@ export class LayoutPage extends HeaderPage {
           this.unselectElements();
           this.editSelectedNodes();
           this.reRender();
+          this.validateCurrentController()
           return;
         }
       }
@@ -594,6 +598,7 @@ export class LayoutPage extends HeaderPage {
       this.reRender();
       this.saveHistorySnapshot();
     }
+    return p;
   }
 
   onEditScreenProperttiesClicked(){
@@ -688,6 +693,7 @@ export class LayoutPage extends HeaderPage {
     this.pendingSave = true;
 
     set("HistorySnapshot", cCode);
+    this.validateCurrentController();
   }
 
   onUndoClicked(){
@@ -722,6 +728,8 @@ Please make sure to accept all file and directory acess permissions shown by the
             
             this.history = [];
             this.parse(text, false);
+
+
           }
         //}
       } catch (ex) {
@@ -730,6 +738,8 @@ Please make sure to accept all file and directory acess permissions shown by the
     }})
     
   }
+
+
 
   onLoadSampleScreensetClicked(ss){
     this.isSampleLoaded = true;
@@ -925,6 +935,28 @@ Please make sure to accept all file and directory acess permissions shown by the
 
   /**
    * 
+   * @param {CNode} node 
+   */
+  selectNode(node){
+
+    if (node instanceof PictureNode) {
+      this.onEditPictureListClicked().then(p=>{
+        Objects.forEach(p.gallery.items, (item, i)=>{
+          if (item.picture==node) {
+            p.gallery.setSelectedIndex(i);
+            return false;
+          }
+        });
+
+      });
+    } else {
+      this.selectElement(node.el, false);
+      this.editSelectedNodes();
+    } 
+  }
+
+  /**
+   * 
    * @param {HTMLElement} elem 
    * @param {boolean} selectMultiple
    */
@@ -1068,14 +1100,19 @@ Please make sure to accept all file and directory acess permissions shown by the
         if (filename1)
         promises.push(FileHelpers.getDirectoryFileContents(this.dirHandle, filename1).then(contents=>{
           ret1.picture_up = contents;
-        }).catch(err=>console.error(err)));
+        }).catch(err=>{
+          this.renderErrors.push({type:"Error", message: "Unable to load " + filename1 +" " + err.message, node:picture})
+          //console.error(err)
+        }));
 
         if (filename2)
         promises.push(FileHelpers.getDirectoryFileContents(this.dirHandle, filename2).then(contents=>{
           ret1.picture_down = contents;
         }).catch(err=>{
-          console.error(filename2);
-          console.error(err);
+          //console.error(filename2);
+          //console.error(err);
+          this.renderErrors.push({type:"Error", message: "Unable to load " + filename1 +" " + err.message, node:picture})
+
         }));
 
       } else {
@@ -1375,6 +1412,27 @@ Please make sure to accept all file and directory acess permissions shown by the
   
   }
 
+  validateCurrentController(){
+    this.renderErrors = [];
+    var errs = this.parser.validateRegionNodes(this.data.controller);
+    this.getCurrentPictureList().then(t=>{
+      this.parseErrors.push( ...this.renderErrors);  
+    });
+
+    /** @type {BackgroundNode[]} */
+    var nodes = Objects.filter(this.parser.getNodes(), node => node instanceof BackgroundNode && node.region==this.data.controller);
+    var added = {}
+    Objects.forEach(nodes, node => {
+      if (added[node.layerN] && added[node.layerN]==node.container) {
+        errs.push({type:"Error", message:"Duplicate Background " + node.controllN + ". Tab Layer Number "+ node.layerN +" already contains a background! UCCNC can render only one background for each tab!", node:node});
+      } else {
+        added[node.layerN]=node.container;
+      }
+    });
+    
+    this.parseErrors = errs;
+  }
+
   get isScreensetLoaded(){
     return this.parser && this.parser.getNodes() && this.parser.getNodes().length > 0
   }
@@ -1490,6 +1548,7 @@ Please make sure to accept all file and directory acess permissions shown by the
 
             if (this.dirHandle) {
               var filename2 = pictures[node.picN].picture_down;// Text.fileFullName(pictures[node.picN].picture_down);
+              if (filename2)
               FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename2).then(ret=>{
                 node.picture.picture_down_handle = ret.fileHandle;
                 if (node instanceof TabNode && !isTabSelected)
@@ -1498,6 +1557,7 @@ Please make sure to accept all file and directory acess permissions shown by the
                 console.error(err);
               })
               var filename1 = pictures[node.picN].picture_up ;//Text.fileFullName(pictures[node.picN].picture_up);
+              if (filename1)
               FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename1).then(ret=>{
                 node.picture.picture_up_handle = ret.fileHandle;
                 if (!(node instanceof TabNode) || isTabSelected)
@@ -1644,7 +1704,9 @@ Please make sure to accept all file and directory acess permissions shown by the
     // @ts-ignore
     var jojPanelSize = Objects.find(this.parser.getNodes(), n=> (n instanceof SetJogPanelTabSizeNode ) && n.region == this.data.controller);
     if (!this.jogVisible) {
-      DOM(this.page).find(".UC-control.AS3jog").css({transform: `translatex(${-jojPanel.w + jojPanelSize.value}px)`})
+      if (jojPanel) {
+        DOM(this.page).find(".UC-control.AS3jog").css({transform: `translatex(${-jojPanel.w + jojPanelSize.value}px)`})
+      }
     }else{
       DOM(this.page).find(".UC-control.AS3jog").css({transform: `translatex(0px)`})
     }
@@ -1765,6 +1827,14 @@ var template = `
       <div class="mb-1">
         Contact us: <span class="link" onclick="this.onShowEmailClicked()">show email</span>
       </div>
+    </div>
+
+    <div class="error-baloon" [if]="this.parseErrors.length > 0" >
+      <div><b>Parse Errors:</b></div>
+      <div [foreach]="this.parseErrors as error">
+        <span onclick="this.selectNode(error.node)" class="error-title clickable">{{error.type}}</span>{{error.message}}
+      </div>
+      
     </div>
   </div>
 </div>
