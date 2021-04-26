@@ -11,7 +11,7 @@ import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_con
 import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
-import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode } from "../Parser";
+import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
 import { PictureListEditor } from "./PictureListEditor";
 import { FontsList } from "../Fonts";
@@ -47,6 +47,9 @@ export class LayoutPage extends HeaderPage {
 
     /** @type {PictureNode[]} */
     this.pictures = [];
+
+
+    this.settings = new UCCNCEditorSettings();
 
     this.ctrlPressed = false;
     this.shiftPressed = false;
@@ -661,9 +664,33 @@ export class LayoutPage extends HeaderPage {
   }
 
   onGenerateButtonClicked(){
-    var p = Injector.Nav.push(new EditorPage(this.selectedNodes[0]) )
+    /** @type {ButtonNode} */
+    var button = this.selectedNodes[0];
+
+    /** @type {ButtonJSONNode} */
+    var jsonNode = Objects.find(this.parser.getNodes(), node=> node instanceof ButtonJSONNode && node.picN == button.picN && node.layerN == button.layerN);
+
+    var p = Injector.Nav.push(new EditorPage(button, jsonNode?.json));
+
+    
+
+    p.settings = this.settings;
+
     p.onDestroy = ()=>{
       this.reRender();
+    }
+    p.onButtonCodeUpdated = (json)=>{
+      if (jsonNode) {
+        jsonNode.json = json;
+      } else {
+        jsonNode = new ButtonJSONNode();
+        jsonNode.region = button.region;
+        jsonNode.picN = button.picN;
+        jsonNode.layerN = button.layerN;
+        jsonNode.json = json;
+        this.parser.insertNewNode(jsonNode);
+      }
+      this.saveHistorySnapshot();
     }
   }
 
@@ -1320,6 +1347,9 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.fontSize = this.data.fontSize;
         node.color = RGBToargb(this.data.color);
         node.align = this.data.align;
+        node.min = Number(this.data.min);
+        node.max = Number(this.data.max);
+        
       }
       if (node instanceof CheckboxNode) {
         node.controllN = this.data.checkBoxN;
@@ -1401,6 +1431,9 @@ Please make sure to accept all file and directory acess permissions shown by the
 
     this.parser = new Parser()
     this.parser.parse(text);
+
+    this.settings = Objects.find(this.parser.getNodes(), node=> node instanceof UCCNCEditorSettings);
+
     //this.renderControls(this.parser.getNodes());
     this.form.fields['controller'].items = this.getControllerItems()
     this.data.controller = this.form.fields['controller'].items[0].value;

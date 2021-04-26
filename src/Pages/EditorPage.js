@@ -4,7 +4,7 @@ import { Objects } from "leet-mvc/core/Objects";
 import { Forms } from "leet-mvc/components/Forms";
 import "./EditorPage.scss";
 import { DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
-import { ButtonNode } from "../Parser";
+import { ButtonNode, UCCNCEditorSettings } from "../Parser";
 import { Text } from "leet-mvc/core/text";
 import { Storage } from "leet-mvc/core/storage";
 import { Alert, Confirm, Prompt } from "leet-mvc/core/simple_confirm";
@@ -16,7 +16,7 @@ export class EditorPage extends DialogPage {
    * 
    * @param {ButtonNode} button 
    */
-  constructor(button){
+  constructor(button, jsonData){
     super();
     this.selector = "page-EditorPage"
     this.title = "UCCNC Button Creator"
@@ -38,12 +38,14 @@ export class EditorPage extends DialogPage {
 
     this.button = button;
 
+    /** @type {UCCNCEditorSettings} */
+    this.settings = null;
+
     this.data = {
+      preset: null,
       controller: null,
       buttonBaseFileName: fn,
       buttonTitle:"Hello",
-      buttonX: 0,
-      buttonY: 0,
       buttonWidth: button.w*2,
       buttonHeight: button.h*2,
       buttonLineWidth: 6,
@@ -75,6 +77,14 @@ export class EditorPage extends DialogPage {
       }
 
     };
+
+    if (jsonData) {
+      delete jsonData.buttonWidth;
+      delete jsonData.buttonHeight;
+      delete jsonData.buttonBaseFileName;
+      delete jsonData.isToggle;
+      Object.assign(this.data, jsonData);
+    }
     this.form = new Forms([
       //{ type:"select", name:"controller", title:"Controller", placeholder:"Select Controller", dynamicItems: true},
       { type:"form", class:"col-md-3", items:[
@@ -135,8 +145,10 @@ export class EditorPage extends DialogPage {
     this.presets = new Forms([
       { type:"form", class:"row", items:[
         { type: "select", name:"preset", class:"col-md-4", title:"Presets", placeholder:"Select preset ...", dynamicItems:true },
-        { type: "button", name:"update", class:"col-md-2", value:"Update", title:" ", displayRule:"true_if_not:preset,null"},
-        { type: "button", name:"create", class:"col-md-2", value:"Create", title:" "}
+        { type: "button", name:"create", class:"col-md-2", value:"Create", title:" "},
+        { type: "button", name:"update", class:"col-md-2", value:"Save", title:" ", displayRule:"true_if_not:preset,null"},
+        { type: "button", name:"rename", class:"col-md-2", value:"Rename", title:" ", displayRule:"true_if_not:preset,null"},
+        { type: "button", name:"delete", class:"col-md-2", value:"Delete", title:" ", displayRule:"true_if_not:preset,null"},
       ]}
     ],this.presetData)
 
@@ -144,16 +156,20 @@ export class EditorPage extends DialogPage {
       if (ev.target.name == "create") {
         Prompt("Enter preset name", (val)=>{
 
-          var preset = Objects.find(this.presetItems, p=> p.preset == val);
+          var existing = Objects.find(this.presetItems, p=> p.preset == val);
+         
           this.data.preset = val;
         
-          if (preset){
-            Objects.overwrite(preset, this.data);
+          if (existing){
+            Alert(`Preset '${val}' already exists.`,()=>{}, "Can not create!");
+            return false;
           } else {
-            this.presets.fields.preset.items.push({value:val, title: val});
             this.presetItems.push(Objects.copy(this.data));
           }
-          Storage.set("ButtonGeneratePresets", this.presetItems);
+          this.updatePresetItems(this.presetItems);
+          setTimeout(() => {
+            this.presetData.preset = val;  
+          }, 0);
         })
       }
       if (ev.target.name == "update") {
@@ -165,14 +181,51 @@ export class EditorPage extends DialogPage {
           Objects.overwrite(preset, this.data);
         } else {
           this.presetItems.push(Objects.copy(this.data));
+          this.updatePresetItems(this.presetItems);
         }
+      }
+      if (ev.target.name == "rename") {
+        Prompt("Enter new preset name", (val)=>{
+          if (val) {
+            var existing = Objects.find(this.presetItems, p=> p.preset == val);
 
-        Storage.set("ButtonGeneratePresets", this.presetItems);
-        
+            var overwriteFunc = ()=>{
+             
+
+              var preset = Objects.find(this.presetItems, p=> p.preset == this.data.preset);
+              if (preset){
+                preset.preset = val;
+              } 
+
+              this.updatePresetItems(this.presetItems);
+              setTimeout(() => {
+                this.data.preset = this.presetData.preset = preset.preset;
+              }, 0);
+   
+            }
+
+            if (existing) {
+              Alert(`Preset '${val}' already exists.`,()=>{}, "Can not rename!");
+              return false;
+            } else {
+              overwriteFunc();
+            }
+
+            
+          }
+        }, "", this.data.preset);
+      }
+      if (ev.target.name == "delete") {
+        Confirm(`Delete preset '${this.data.preset}' ?`, ()=>{
+          this.presetItems =  Objects.filter(this.presetItems, p=> p.preset != this.data.preset);
+          this.updatePresetItems(this.presetItems);
+          this.data.preset = this.presetData.preset  = null;
+        }, "Delete Preset");
       }
     }
     this.presets.onChange = ()=>{
       var preset = Objects.find(this.presetItems, p=> p.preset == this.presetData.preset);
+      this.data.preset = preset.preset
       this.data.isToggle = preset.isToggle;      
 
       this.data.buttonTextSize = preset.buttonTextSize;
@@ -199,15 +252,9 @@ export class EditorPage extends DialogPage {
       this.drawControl();
     }
 
+    //legacy presets import
     this.presetItems = Storage.get("ButtonGeneratePresets",[]);
-
-    this.presets.fields.preset.items = Objects.map(this.presetItems, (p)=>{
-      return {
-        value: p.preset,
-        title: p.preset,
-      }
-    });
-
+    
     this.buttons = {
       Close:()=>{},
       "Save Files": ()=>{
@@ -222,6 +269,28 @@ export class EditorPage extends DialogPage {
 
     //imageElem = document.getElementById('image');
   }
+
+  settingsChange(value){
+    if (!value) {
+      return;
+    }
+    this.updatePresetItems(value.settings.buttonPresets);
+  }
+
+  updatePresetItems(value){
+    this.presetItems = value;
+
+    if (this.settings)
+      this.settings.settings.buttonPresets = value;
+   
+    this.presets.fields.preset.items = Objects.map(value, (p)=>{
+      return {
+        value: p.preset,
+        title: p.preset,
+      }
+    });
+  }
+
   onInit(){
     this.cn_b_up = DOM("#canvas_button_up").first().getContext('2d');
     this.cn_b_down = DOM("#canvas_button_down").first().getContext('2d');
@@ -360,23 +429,14 @@ drawButton_down(ctx, isToggleOn = false){
     } else {
       downloadFile(this.cn_b_down.canvas, this.data.buttonBaseFileName + "_down.png");
     }
+
+    this.onButtonCodeUpdated(Objects.copy(this.data));
   }
 
-  /*async onSaveIntoButtonClicked(){
-    if (!this.form.validator.validate())
-      return;
-    if (this.button.picture.picture_up_handle){
-      await FileHelpers.saveCanvasToFileHandle(this.cn_b_up.canvas, this.button.picture.picture_up_handle)
-    } else {
-      downloadFile(this.cn_b_up.canvas, this.data.buttonBaseFileName + "_up.png");
-    }
+  /** @override */
+  onButtonCodeUpdated(json){
 
-    if (this.button.picture.picture_down_handle){
-      await FileHelpers.saveCanvasToFileHandle(this.cn_b_down.canvas, this.button.picture.picture_down_handle)
-    } else {
-      downloadFile(this.cn_b_down.canvas, this.data.buttonBaseFileName + "_down.png");
-    }
-  }*/
+  }
 
   parse(text){
     this.parser.parse(text);

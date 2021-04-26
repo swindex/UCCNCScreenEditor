@@ -16,6 +16,11 @@ export class Parser {
   insertNewNode(node) {
     //find the last node of the same type in the current region
     var index = null;
+
+    if (node instanceof ButtonJSONNode){
+      //Insert at the top of file
+      index = 0;
+    }
     //try to get the last element with the same region, container and type
     for (var i=this.nodes.length-1; i>=0 ; i--){
       if ( this.nodes[i].region == node.region && this.nodes[i].container === node.container && this.nodes[i].constructor.name === node.constructor.name) {
@@ -34,7 +39,7 @@ export class Parser {
     //try to get the last element with the same region and SetJogPanelSizeNode
     if (index == null)
     for (var i=this.nodes.length-1; i>=0 ; i--){
-      if ( this.nodes[i].region == node.region && this.nodes[i] instanceof SetJogPanelSizeNode) {
+      if ( this.nodes[i].region == node.region && this.nodes[i] instanceof SetJogPanelTabSizeNode) {
         index = i;
         break;
       }
@@ -165,6 +170,14 @@ export class Parser {
         return node;
       }
 
+      if (node = UCCNCEditorSettings.parse(line)) {
+        return node;
+      }
+
+      if (node = ButtonJSONNode.parse(line)) {
+        return node;
+      }
+
       return new TextNode(line)
 
     })
@@ -175,10 +188,19 @@ export class Parser {
         cRegion = node.region;
       } else if (node instanceof RegionEndNode) {
         cRegion = null;
+      } else if (node.region){
+        //region already set inside node
+        console.log(node);
       } else {
         node.region = cRegion;
       }
     })
+
+    var settings = Objects.find(this.nodes, node=> node instanceof UCCNCEditorSettings);
+    if (!settings) {
+      this.nodes.unshift(new UCCNCEditorSettings());
+
+    }
 
     console.log(`Total Nodes: ${this.nodes.length}`)
     //console.log(this.nodes);
@@ -212,9 +234,11 @@ export class Parser {
 
   getCCode(){
     var ret = [];
+
     Objects.forEach(this.nodes, node=>{
       var line = node.getCCode();
-      ret.push(line);
+      if (line !== null)
+        ret.push(line);
     })
     return ret.join('\n');
   }
@@ -704,7 +728,7 @@ export class CheckboxNode extends ControlNode {
 }
 
 export class ButtonNode extends ControlNode{
-  constructor(line) {
+  constructor() {
     super();
     this.blink = false;
     this.toggle = false;
@@ -712,7 +736,6 @@ export class ButtonNode extends ControlNode{
     this.picN = null;
     /** @type {PictureNode} */
     this.picture = null;
-
   }
   /**
    * 
@@ -722,7 +745,7 @@ export class ButtonNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\-?[\d\.]*)\s*,\s*(?<y>\-?[\d\.]*)\s*,\s*(?<w>[\d\.]*)\s*,\s*(?<h>[\d\.]*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*|null)\s*,\s*(?<controllN>\d*|null)\s*,\s*(?<layerN>\d*|null)\s*\)\s*;\s*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\-?[\d\.]*)\s*,\s*(?<y>\-?[\d\.]*)\s*,\s*(?<w>[\d\.]*)\s*,\s*(?<h>[\d\.]*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*|null)\s*,\s*(?<controllN>\d*|null)\s*,\s*(?<layerN>\d*|null)\s*\)\s*;.*$/)
     if (!m) return null;
 
     var ret = new ButtonNode();
@@ -736,8 +759,6 @@ export class ButtonNode extends ControlNode{
     ret.controllN = m.groups.controllN !== 'null' ? Number(m.groups.controllN) : null;
     ret.blink = s2b(m.groups.blink);
     ret.toggle = s2b(m.groups.toggle);
-
-
 
     return ret;    
   }
@@ -1160,6 +1181,82 @@ export class TextNode extends CNode{
   }
 }
 
+export class UCCNCEditorSettings {
+  constructor(){
+    this.settings = {
+      buttonPresets : [],
+      backgrounds : [],
+    }
+    this.error = null;
+  }
+  /** @return {UCCNCEditorSettings|null} */
+  static parse(cCode = ""){
+    if (!cCode) return null;
+    var m = cCode.match(/^\/\/UCCNCEDITORJSON\((?<json>.*)\)\s*$/)
+    
+    if (!m) return null
+
+    var ret = new UCCNCEditorSettings()
+    if (m.groups.json) {
+      try {
+        ret.settings = JSON.parse(m.groups.json);
+      } catch (err) {
+        ret.error = err;
+        ret.settings = {
+          buttonPresets : [],
+          backgrounds : [],
+        }
+      }
+    }
+    return ret;
+  }
+
+  /** @return {string} */
+  getCCode(){
+    return `//UCCNCEDITORJSON(${JSON.stringify(this.settings)})`
+  }
+}
+
+export class ButtonJSONNode extends CNode {
+  constructor(){
+    super();
+    this.picN = null;
+    this.layerN = null;
+    this.json = null
+    this.error = null;
+
+  }
+  /** @return {ButtonJSONNode|null} */
+  static parse(cCode = ""){
+    if (!cCode) return null;
+    var m = cCode.match(/^\/\/ButtonJSONNode\((?<json>.*)\)\s*$/)
+    
+    if (!m) return null
+
+    var ret = new ButtonJSONNode()
+    if (m.groups.json) {
+      try {
+        var body = JSON.parse(m.groups.json);
+        ret.region = body.region;
+        ret.json = body.json
+        ret.picN = body.picN;
+        ret.layerN = body.layerN;
+      } catch (err) {
+        ret.error = err;
+      }
+    }
+    return ret;
+  }
+
+  /** @return {string} */
+  getCCode(){
+    if (!this.json || Object.keys(this.json).length ==0 ){
+      return null;
+    }
+    return `//ButtonJSONNode(${JSON.stringify({ region: this.region, picN: this.picN, layerN: this.layerN, json: this.json})})`
+  }
+}
+
 export function b2s(val){
   return val ? "true" : "false"
 }
@@ -1198,4 +1295,17 @@ export function getSimilarProperty(arr, prop){
 
 export function minMaxToString(val){
   return Text.toString(val).toUpperCase();
+}
+
+function frmtInlineJSON(json){
+  if (!json) {
+    return '';
+  }
+
+  if (json.error) {
+    return ` //JSON(${json.json_str})`;
+  } else {
+    return ` //JSON(${JSON.stringify(json)})`;
+  }
+  
 }
