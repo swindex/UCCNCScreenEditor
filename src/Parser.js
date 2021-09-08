@@ -745,7 +745,7 @@ export class ButtonNode extends ControlNode{
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\-?[\d\.]*)\s*,\s*(?<y>\-?[\d\.]*)\s*,\s*(?<w>[\d\.]*)\s*,\s*(?<h>[\d\.]*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*|null)\s*,\s*(?<controllN>\d*|null)\s*,\s*(?<layerN>\d*|null)\s*\)\s*;.*$/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.Addbutton\s*\(\s*(?<x>\-?[\d\.]*)\s*,\s*(?<y>\-?[\d\.]*)\s*,\s*(?<w>[\d\.]*)\s*,\s*(?<h>[\d\.]*)\s*,\s*(?<toggle>true|false)\s*,\s*(?<blink>true|false)\s*,\s*(?<picN>\d*|null)\s*,\s*(?<controllN>\d*|null)\s*,\s*(?<layerN>\d*|null)\s*\)\s*;/)
     if (!m) return null;
 
     var ret = new ButtonNode();
