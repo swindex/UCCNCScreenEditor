@@ -28,7 +28,7 @@ export class LayoutPage extends HeaderPage {
     super();
     
     this.selector = "page-LayoutPage"
-    this.title = "UCCNC Layout Editor"
+    this.title = "UCCNC Screen Editor"
     /** @type {FileSystemFileHandle} */
     this.fileHandle= undefined;
     /** @type {FileSystemDirectoryHandle} */

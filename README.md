@@ -4,6 +4,8 @@ A Web app that allows you to load and edit layout of your UCCNC screensets, gene
 
 # Here is the latest version of the app: https://snapwebapps.com/uccnceditor/
 
+![](docs/Screenshot.png)
+  
 # How to contribute.
 Anyone can file a bug report or clone the repo, fix something and create a PR
 
