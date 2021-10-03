@@ -30,6 +30,7 @@ module.exports = (env) => {
     {
       entry: ['./src/index.js'],
       devServer: {
+        port: 9000,
         contentBase: path.join(__dirname, 'static'),
       },
       optimization: (mode=="production" ? {
@@ -60,6 +61,6 @@ module.exports = (env) => {
     }
   );
 
-  console.log(out);
+  //console.log(out);
   return out;
 };

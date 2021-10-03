@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "webpack--dev": "webpack serve",
+    "serve": "webpack serve",
     "build": "webpack --env=production",
     "build-deploy": "webpack --env=production && node ./utils/deploy_web",
     "deploy": "node ./utils/deploy_web"
