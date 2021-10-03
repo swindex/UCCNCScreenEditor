@@ -587,6 +587,7 @@ export class LayoutPage extends HeaderPage {
     p.pictures = this.pictures;
     p.container = this.selectedNodes[0]?.container || 'AS3';
     p.region = this.data.controller;
+    p.allowFileOperations = !!this.fileHandle;
     
     p.onAddPicture = (pic)=>{
       this.parser.insertNewNode(pic);
@@ -777,10 +778,12 @@ Please make sure to accept all file and directory acess permissions shown by the
     if (ss==2)
       file="Default2019.ssf";
 
-      FetchFile(file).then(text=>{
-        this.history = [];
-        this.parse(text, false);
-      })
+    FetchFile(file).then(text=>{
+      this.history = [];
+      this.parse(text, false);
+    })
+
+    Alert("File operations are not allowed for the Sample screensets loaded from the web site!\nPlease load a screenset from your computer in order to be able to save changes, add pictures, etc.",null,"Warning");
   }
 
   async onRestoreSessionClicked(){
@@ -808,6 +811,8 @@ Please make sure to accept all file and directory acess permissions shown by the
   }
 
   async onSaveAsScreensetClicked(){
+    if (!this.isFileOpsAllowed()) return;
+
     var fileHandle = await window.showSaveFilePicker({
       types: [
         {
@@ -824,34 +829,30 @@ Please make sure to accept all file and directory acess permissions shown by the
         },
       ],
     });
-    if (fileHandle){
-      await FileHelpers.writeTextToFileHandle(this.parser.getCCode(), this.fileHandle);
-      this.fileHandle = fileHandle;
-      this.pendingSave = false;
-    }
-    /*if (fileHandle && await this.verifyPermission(fileHandle, true)){
-      this.fileHandle = fileHandle;
-      var writable = await fileHandle.createWritable();
-      var text = this.parser.getCCode();
-      await writable.write(text);
-      writable.close();
-      this.pendingSave = false;
-    }*/
+    if (!fileHandle) { return }
+
+    this.fileHandle = fileHandle;
+    let gcode = this.parser.getCCode();
+    await FileHelpers.writeTextToFileHandle(gcode,  this.fileHandle);
+      
+    this.pendingSave = false;
   }
+
+  isFileOpsAllowed(){
+    if (!this.fileHandle) {
+      Alert("File operations are not allowed for the Sample screensets loaded from the web site!\nPlease load a screenset from your computer.",null,"Error");
+      return false;
+    }
+    return true;
+  }
+
   async onSaveScreensetClicked(){
-    if (this.fileHandle){
-      await FileHelpers.writeTextToFileHandle(this.parser.getCCode(), this.fileHandle);
-      this.pendingSave = false;
-    }
-    /*
-    if (this.fileHandle && await this.verifyPermission(this.fileHandle, true)){
-      var writable = await this.fileHandle.createWritable();
-      var text = this.parser.getCCode();
-      await writable.write(text);
-      writable.close();
-      this.pendingSave = false;
-    }*/
+    if (!this.isFileOpsAllowed()) return;
+
+    await FileHelpers.writeTextToFileHandle(this.parser.getCCode(), this.fileHandle);
+    this.pendingSave = false;
   }
+
   verifyPermission(fileHandle, readWrite) {
     const options = {};
     if (readWrite) {
@@ -1779,7 +1780,7 @@ var template = `
 
     <div class="mb-1" [if]="this.LastSession">
       <div class="text-danger" [if]="this.pendingSave">Warning, your last session was not saved to the disc!</div>
-      Restore your last session on this computer:
+      Restore your last session in this browser:
     </div>
     <div class="mb-1" [if]="this.LastSession">
       <button type="button" class="btn btn-xl btn-primary" onclick="this.onRestoreSessionClicked()"><i class="fas fa-folder-open"></i> Restore Last Session</button>
@@ -1792,7 +1793,7 @@ var template = `
       <button type="button" class="btn btn-xl btn-primary" onclick="this.onLoadScreensetClicked()"><i class="fas fa-folder-open"></i> Load Screenset</button>
     </div>
     <div class="mb1 text-center">
-    -- or --
+    -- OR safely play with the Sample --
     </div>
     <div class="mb-1">
       <button type="button" class="btn btn-xl btn-primary" onclick="this.onLoadSampleScreensetClicked(1)">Load Sample Defaultscreenset</button>
@@ -1855,8 +1856,8 @@ var template = `
     </div>
     <div class="help-baloon">
       <div><b>Ctrl + LeftMouse</b> to select multiple items</div>
-      <div><b>Shift + LeftMouse</b> to drag/resize items</div>
-      <div><b>Alt + LeftMouse</b> to select Fill</div>
+      <div><b>Shift + LeftMouse</b> to drag items</div>
+      <div><b>Alt + LeftMouse</b> to select Fill layer (the 'disabled' backdrop)</div>
       <div class="mb-1">
         Contact us: <span class="link" onclick="this.onShowEmailClicked()">show email</span>
       </div>

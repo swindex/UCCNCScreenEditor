@@ -16,7 +16,7 @@ var config = {
   host: secret.ftp.host,
   port: secret.ftp.port,
   localRoot: dir + "../www",
-  remoteRoot: "/buttons",
+  remoteRoot: "/uccnceditor",
   include: ['*', '**/*'],
   exclude: ['.git', '*.js.map', '.idea', 'tmp/*', 'build/*'/*, 'res/gdt/*', 'img/*','fonts/*'/**/]
 };

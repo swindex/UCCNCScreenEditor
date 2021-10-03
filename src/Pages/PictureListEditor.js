@@ -15,13 +15,15 @@ export class PictureListEditor extends DialogPage {
 
     this.region = null;
     this.container = null;
-
+    this.allowFileOperations = false;
     this.gallery = new PictureGallery();
     this.gallery.editControls = true;
     /** @type {string|null} */
     this.BMPFolder = null;
 
     this.gallery.onPictureUpSelect = async (item, index)=>{
+      if (!this.isFileOpsAllowed()) return;
+
       var fileItem = await FileHelpers.selectFileFromDirectoryHandle(dirHandle, "Select UP image file")
       if (!fileItem) return;
 
@@ -33,6 +35,8 @@ export class PictureListEditor extends DialogPage {
       item.picture.picture_up = item.picture_up_name;
     }
     this.gallery.onPictureDownSelect = async (item, index)=>{
+      if (!this.isFileOpsAllowed()) return;
+
       var fileItem = await FileHelpers.selectFileFromDirectoryHandle(dirHandle, "Select DOWN image file")
       if (!fileItem) return;
 
@@ -51,6 +55,7 @@ export class PictureListEditor extends DialogPage {
     }
 
     this.gallery.onPictureDownRemove = (item, index)=>{
+
       item.picture_down = null;
       item.picture_down_name =  null;
       item.picture.picture_down = null;
@@ -69,14 +74,17 @@ export class PictureListEditor extends DialogPage {
       },
       "Delete Picture" :()=>{
         if (!this.gallery.selectedItem) {
-          Alert("Please selet a picture!");
+          Alert("Please select a picture!");
           return false;
         }
         this.gallery.items = Objects.filter(this.gallery.items, f=> f.picN != this.gallery.selectedItem.picN);
+        this.gallery.setSelectedIndex(null);
         this.onRemovePicture(this.item.picture);
         return false;
       },
       "Add Picture":()=>{
+        if (!this.isFileOpsAllowed()) return false;
+
         Prompt("Enter Picture Number",(val)=>{
           val = Number(val)
           var epic = this.gallery.items.find(f=>f.picN == val);
@@ -104,6 +112,14 @@ export class PictureListEditor extends DialogPage {
       }
     }
 
+  }
+
+  isFileOpsAllowed(){
+    if (!this.allowFileOperations) {
+      Alert("File operations are not allowed for the Sample screensets loaded from the web site!\nPlease load a screenset from your computer.",null,"Error");
+      return false;
+    }
+    return true;
   }
 
   /** @param {PictureNode} picture */
