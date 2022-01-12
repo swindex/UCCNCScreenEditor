@@ -1,3 +1,4 @@
 node_modules
 www/*
 utils/secret.js
+.vscode/tasks.json

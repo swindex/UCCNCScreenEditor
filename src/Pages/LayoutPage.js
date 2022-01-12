@@ -620,14 +620,17 @@ export class LayoutPage extends HeaderPage {
     p.controls = [
       { type:"label", value:"Main Screen Size" },
       { type:"form", name:"main", class:"row", items:[
-        { type:"number", name:"w", title:"Width", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
-        { type:"number", name:"h", title:"Height", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
+        { type:"number", name:"w", title:"Width", placeholder:"", validateRule:"required|numeric|min:300", class:"col-6", unit:"px"},
+        { type:"number", name:"h", title:"Height", placeholder:"", validateRule:"required|numeric|min:300", class:"col-6", unit:"px"},
       ]},
       { type:"label", value:"Jog Panel Size" },
       { type:"form", name:"jog", class:"row", items:[
-        { type:"number", name:"w", title:"Width", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
-        { type:"number", name:"h", title:"Height", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
-        { type:"number", name:"collapsed_w", title:"Collapsed Width", placeholder:"", validateRule:"required|numeric", class:"col-6", unit:"px"},
+        { type:"number", name:"w", title:"Width", placeholder:"", validateRule:"required|numeric|min:1", class:"col-6", unit:"px"},
+        { type:"number", name:"h", title:"Height", placeholder:"", validateRule:"required|numeric|min:1", class:"col-6", unit:"px"},
+        { type:"number", name:"collapsed_w", title:"Collapsed Width", placeholder:"", validateRule:"required|numeric|min:0", class:"col-6", unit:"px"},
+      ]},
+      { type:"form", name:"common", class:"row", items:[
+        { type:"checkbox", name:"resize", title:"Resize Child Elements", placeholder:"", class:"col-6"},
       ]},
     ];
     p.render();
@@ -638,8 +641,42 @@ export class LayoutPage extends HeaderPage {
         return false;
       }
       
+      if (p.data.common.resize) {
+        var xf = p.data.main.w / main.w
+        var yf = p.data.main.h / main.h
+        /** @type {ControlNode[]} */
+        var elems = Objects.filter(this.parser.getNodes(), node => node.region == this.data.controller && node.__proto__ instanceof ControlNode && node.container == "AS3")
+        elems.forEach((elem)=>{
+          if (elem.x != null)
+            elem.x = elem.x * xf
+          if (elem.y != null)
+            elem.y = elem.y * yf 
+          if (elem.w != null)
+            elem.w = elem.w * xf
+          if (elem.h != null)
+            elem.h = elem.h * yf     
+        })
+      }
+
       main.w = p.data.main.w;
       main.h = p.data.main.h;
+      
+      if (p.data.common.resize) {
+        var xf = p.data.jog.w / jog.w
+        var yf = p.data.jog.h / jog.h
+        /** @type {ControlNode[]} */
+        var elems = Objects.filter(this.parser.getNodes(), node => node instanceof ControlNode && node.region == this.data.controller && node.container == "AS3jog")
+        elems.forEach((elem)=>{
+          if (elem.x != null)
+            elem.x = elem.x * xf
+          if (elem.y != null)
+            elem.y = elem.y * yf 
+          if (elem.w != null)
+            elem.w = elem.w * xf
+          if (elem.h != null)
+            elem.h = elem.h * yf     
+        })
+      }
 
       jog.w = p.data.jog.w;
       jog.h = p.data.jog.h;
@@ -653,13 +690,17 @@ export class LayoutPage extends HeaderPage {
     p.data = Objects.overwrite(p.data, {
       main:{
         w: main.w,
-        h: main.h
+        h: main.h,
       },
       jog:{
         w: jog.w,
         h: jog.h,
         collapsed_w: jogCollapsed.value,
+      },
+      common:{
+        resize: true
       }
+
     })
 
   }
@@ -1500,13 +1541,13 @@ Please make sure to accept all file and directory acess permissions shown by the
 
     Objects.forEach(nodes, (anyNode)=>{
       // @ts-ignore
-      if (anyNode.__proto__ instanceof ControlNode) {
+      if (anyNode.__proto__ instanceof ControlNode || anyNode instanceof SetScreenSizeNode) {
         //If control inherits from ControlNode
         /** @type {ControlNode}*/
         // @ts-ignore
         var node = anyNode;
         
-        if (!this.visibleLayers.includes(node.layerN)) {
+        if (!this.visibleLayers.includes(node.layerN) && !(anyNode instanceof SetScreenSizeNode)) {
           if (node instanceof TabNode && this.visibleLayers.includes(node.parentN )) {
             //tab visisble
           } else {
@@ -1705,7 +1746,7 @@ Please make sure to accept all file and directory acess permissions shown by the
           //tab visisble
         }
 
-        if (node instanceof CheckboxNode || node instanceof ColorNode) {
+        if (node instanceof CheckboxNode || node instanceof ColorNode || node instanceof SetScreenSizeNode) {
           el.textContent = "";
         }
 
