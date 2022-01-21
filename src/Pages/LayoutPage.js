@@ -175,6 +175,10 @@ export class LayoutPage extends HeaderPage {
       if (this.selectedNodes.length > 0) {
         this.updateSelectedNodes();
         this.saveHistorySnapshot();
+
+        setTimeout(()=>{
+          this.editSelectedNodes();
+        }, 16);
       }
       this.reRender();
     }
@@ -712,7 +716,7 @@ export class LayoutPage extends HeaderPage {
     /** @type {ButtonJSONNode} */
     var jsonNode = Objects.find(this.parser.getNodes(), node=> node instanceof ButtonJSONNode && node.picN == button.picN && node.layerN == button.layerN);
 
-    var p = Injector.Nav.push(new EditorPage(button, jsonNode?.json));
+    var p = Injector.Nav.push(new EditorPage(button, this.dirHandle, jsonNode?.json));
 
     
 
@@ -720,6 +724,11 @@ export class LayoutPage extends HeaderPage {
 
     p.onDestroy = ()=>{
       this.reRender();
+    }
+    p.onNewPictureCreated = ()=>{
+      //console.log(picnode);
+      Alert("Please click on the Edit Picture List button and, and add the pictures you have just created to the list!")
+      p.destroy()
     }
     p.onButtonCodeUpdated = (json)=>{
       if (jsonNode) {

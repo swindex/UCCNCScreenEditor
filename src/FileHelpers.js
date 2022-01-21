@@ -138,7 +138,7 @@ export const FileHelpers = {
   },
 
   /**
-
+   * @param {FileSystemDirectoryHandle} dirHandle
    */
   async selectFileFromDirectoryHandle(dirHandle, title){
     var p = Injector.Nav.push(new FileSystemFilePicker(dirHandle, title));
@@ -146,6 +146,16 @@ export const FileHelpers = {
       p.onFileSelected = (item) => resolve(item);
       p.onCancelClicked = () => reject();
     })
+  },
 
+  /**
+   * @param {FileSystemDirectoryHandle} dirHandle
+   */
+  async selectDirectoryFromDirectoryHandle(dirHandle, title){
+    var p = Injector.Nav.push(new FileSystemFilePicker(dirHandle, title, true));
+    return new Promise(function(resolve, reject){
+      p.onDirectorySelected = (item) => resolve(item);
+      p.onCancelClicked = () => reject();
+    })
   }
 }

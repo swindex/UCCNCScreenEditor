@@ -4,24 +4,27 @@ import { Objects } from "leet-mvc/core/Objects";
 import { Forms } from "leet-mvc/components/Forms";
 import "./EditorPage.scss";
 import { DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
-import { ButtonNode, UCCNCEditorSettings } from "../Parser";
+import { ButtonNode, PictureNode, UCCNCEditorSettings } from "../Parser";
 import { Text } from "leet-mvc/core/text";
 import { Storage } from "leet-mvc/core/storage";
 import { Alert, Confirm, Prompt } from "leet-mvc/core/simple_confirm";
 import { FileHelpers } from "../FileHelpers";
 
-
 export class EditorPage extends DialogPage {
   /**
    * 
    * @param {ButtonNode} button 
+   * @param {FileSystemDirectoryHandle} dirHandle
    */
-  constructor(button, jsonData){
+  constructor(button, dirHandle, jsonData){
     super();
     this.selector = "page-EditorPage"
     this.title = "UCCNC Button Creator"
     /** @type {File} */
     this.file=null;
+
+    /** @type {FileSystemDirectoryHandle} */
+    this.dirHandle = dirHandle;
 
     this.classNames.push('large');
 
@@ -257,6 +260,11 @@ export class EditorPage extends DialogPage {
     
     this.buttons = {
       Close:()=>{},
+      "Save As New Picture": ()=>{
+        this.onSaveNewButtonClicked();
+
+        return false;
+      },
       "Save Files": ()=>{
         this.onSaveButtonClicked();
 
@@ -410,6 +418,67 @@ drawButton_down(ctx, isToggleOn = false){
     reader.readAsText(file)
   }
 
+  async onSaveNewButtonClicked(){
+    if (!this.form.validator.validate()){
+      return;
+    }
+
+    //var dirItem = await FileHelpers.selectDirectoryFromDirectoryHandle(this.dirHandle, "Select directory to save the files in")
+    //if (!dirItem) return;
+    var fileHandle_up = await window.showSaveFilePicker({
+      suggestedName: this.data.buttonBaseFileName + "_up.png",
+      types: [
+        {
+          description: 'UP png Image File',
+          accept: {
+            'image/png': ['.png'],
+          },
+        }
+      ],
+    })
+
+    var fileHandle_down = await window.showSaveFilePicker({
+      suggestedName: this.data.buttonBaseFileName + "_down.png",
+      types: [
+        {
+          description: 'DOWN png Image File',
+          accept: {
+            'image/png': ['.png'],
+          },
+        }
+      ],
+    })
+
+    if (!fileHandle_up || !fileHandle_down){
+      Alert("Operation cancelled by the user");
+      return;
+    }
+
+   
+
+    await FileHelpers.saveCanvasToFileHandle(this.cn_b_up.canvas, fileHandle_up)
+    await FileHelpers.saveCanvasToFileHandle(this.cn_b_up.canvas, fileHandle_down)
+   
+
+    var pic = new PictureNode();
+    pic.container = this.button.container;
+    pic.picture_up = fileHandle_up.name;
+    pic.picture_down = fileHandle_up.name;
+    pic.picture_up_handle = fileHandle_up;
+    pic.picture_down_handle = fileHandle_down;
+
+    this.onNewPictureCreated(pic)
+
+    //downloadFile(this.cn_b_up.canvas, this.data.buttonBaseFileName + "_up.png");
+    //downloadFile(this.cn_b_down.canvas, this.data.buttonBaseFileName + "_down.png");
+    //this.onNewPictureCreated()
+  }
+
+  /** @param {PictureNode} picture*/
+  onNewPictureCreated(picture){
+
+  }
+
   async onSaveButtonClicked(){
     if (!this.form.validator.validate())
       return;
@@ -433,7 +502,7 @@ drawButton_down(ctx, isToggleOn = false){
     this.onButtonCodeUpdated(Objects.copy(this.data));
   }
 
-  /** @override */
+  /** @mustoverride */
   onButtonCodeUpdated(json){
 
   }

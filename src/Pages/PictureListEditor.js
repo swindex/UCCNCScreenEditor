@@ -85,6 +85,14 @@ export class PictureListEditor extends DialogPage {
       "Add Picture":()=>{
         if (!this.isFileOpsAllowed()) return false;
 
+        var max = 0
+        this.gallery.items.forEach(el=>{
+          if (el.picN > max) {
+            max = el.picN;
+          }
+        });
+        max ++
+
         Prompt("Enter Picture Number",(val)=>{
           val = Number(val)
           var epic = this.gallery.items.find(f=>f.picN == val);
@@ -107,7 +115,7 @@ export class PictureListEditor extends DialogPage {
             picture: pic
           })
 
-        })
+        }, null, String(max))
         return false;
       }
     }

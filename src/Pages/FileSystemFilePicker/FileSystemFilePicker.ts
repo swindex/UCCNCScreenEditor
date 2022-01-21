@@ -17,30 +17,46 @@ export class FileSystemFilePicker extends DialogPage {
 
   path: FileItem[] = [];
   selectedDirItem: FileItem = null;
-  selectedItem: FileItem = null;
+  selectedFileItem: FileItem = null;
 
   searchText: string = null;
+  isDirectory: boolean;
 
-  constructor(dirHandle: FileSystemDirectoryHandle, title?: string){
+  constructor(dirHandle: FileSystemDirectoryHandle, title?: string, isDirectory?: boolean){
     super();
 
     this.title = title;
     this.classNames.push("page-FileSystemFilePicker");
 
     this.dirHandle = dirHandle;
+
+    this.isDirectory = isDirectory
  
     this.buttons = {
       Close: ()=>{
         this.onCancelClicked();
       },
       Select: ()=>{
-        if (!this.selectedItem)
+        if (this.isDirectory) {
+          if (!this.selectedDirItem) {
+            return false;
+          }
+
+          this.path.shift();  
+          var path =  Objects.map(this.path, f=>f.name).join("/");
+          this.selectedDirItem.path = path;
+          this.onDirectorySelected(this.selectedDirItem);
+          return true;
+        }
+
+        if (!this.selectedFileItem)
           return false;
 
         this.path.shift();  
         var path =  Objects.map(this.path, f=>f.name).join("/");
-        this.selectedItem.path = path;
-        this.onFileSelected(this.selectedItem);
+        this.selectedFileItem.path = path;
+        this.onFileSelected(this.selectedFileItem);
+        return true;
       }
     }
 
@@ -49,6 +65,10 @@ export class FileSystemFilePicker extends DialogPage {
 
   /** @override */
   onFileSelected(file: FileItem){
+
+  }
+
+  onDirectorySelected(file: FileItem){
 
   }
 
@@ -71,6 +91,7 @@ export class FileSystemFilePicker extends DialogPage {
 
   async getDirContents(item: FileItem){
     var items = []
+    this.selectedDirItem = item
     if (item.parentHandle) {
       items.push({
         icon: this.getIcon("", item.parentHandle.kind),
@@ -80,12 +101,17 @@ export class FileSystemFilePicker extends DialogPage {
       });
     }
     for await (let [name, handle] of item.handle.entries()) {
+      if (this.isDirectory && handle.kind != "directory"){
+        //hide files if only directory requested
+        continue;
+      }
       items.push({
         icon: this.getIcon(name, handle.kind),
         name:name,
         handle: handle,
         parentHandle :  item.handle
       });
+    
     }
 
 
@@ -117,13 +143,14 @@ export class FileSystemFilePicker extends DialogPage {
     if (item.handle == null) {
       this.path.pop();
       var item = this.path.pop();
-      this.selectedItem = null;
+      this.selectedFileItem = null;
       await this.getDirContents(item);
       //go Up
     } else if (item.handle.kind == "file") {
-      this.selectedItem = item;
+      this.selectedFileItem = item;
     } else {
-      this.selectedItem = null;
+      this.selectedFileItem = null;
+      
       await this.getDirContents(item);
     }
   }
@@ -133,7 +160,7 @@ export class FileSystemFilePicker extends DialogPage {
   }
 
   isSelectedItem(item){
-    if (this.selectedItem && item?.handle == this.selectedItem?.handle) {
+    if (this.selectedFileItem && item?.handle == this.selectedFileItem?.handle) {
       return true;
     }
   }
