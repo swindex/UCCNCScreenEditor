@@ -21,6 +21,7 @@ import { LedNumbers } from "../LedNumbers";
 import { FieldNumbers } from "../FieldNumbers";
 import { CheckBoxNumbers } from "../CheckBoxNumbers";
 import { FieldTypes } from "../FieldTypes";
+import { ControlTree } from "../Components/ControlTree";
 
 
 export class LayoutPage extends HeaderPage {
@@ -144,7 +145,7 @@ export class LayoutPage extends HeaderPage {
 
       { type:"number", name:"transparency", title:"Opacity", placeholder:"", displayRule:`true_if:controllType,${ListNode.name},${FillNode.name}`, validateRule:"required|numeric|min:0|max:1", unit:""},
       
-      { type:"select", name:"align", title:"Text Align", placeholder:"", displayRule:"true_if:controllType,"+FieldNode.name+","+ListNode.name+","+TabNode.name+"", validateRule:"required", items:[
+      { type:"select", name:"align", title:"Text Align", placeholder:"", displayRule:"true_if:controllType,"+FieldNode.name+","+ListNode.name+","+TabNode.name+","+LabelNode.name+"", validateRule:"required", items:[
         { value:"left", title: "Left"},
         { value:"center", title: "Center"},
         { value:"right", title: "Right"},
@@ -185,6 +186,9 @@ export class LayoutPage extends HeaderPage {
 
     this.parser = new Parser()
 
+    this.controlTree = new ControlTree()
+    this.controlTree.selectedNodes = this.selectedNodes;
+
     this.jogVisible = false;
     this.LastSession = null;
     get("HistorySnapshot").then(snap=>{
@@ -193,6 +197,9 @@ export class LayoutPage extends HeaderPage {
     get("pendingSave").then(val=>{
       this.pendingSave = val;
     })
+
+
+
   }
 
   pendingSaveChange(val){
@@ -219,9 +226,16 @@ export class LayoutPage extends HeaderPage {
     this.pictures.sort(function(a,b){
       return a.controllN - b.controllN
     })
+
+    let currentNodes = Objects.filter(this.parser.getNodes(), node => node.region==this.data.controller && this.data.controller);
+    //Objects.forEach(currentNodes, node=>node.el = null);
    
     await this.renderMainArea();
     await this.renderJogArea();
+    
+    this.controlTree.setNodes(currentNodes)
+    this.controlTree.setSelectedNodes(this.selectedNodes);
+
     this.hideOrShowJog();
   }
 
@@ -240,6 +254,11 @@ export class LayoutPage extends HeaderPage {
     if (oldChild){
       oldChild.style.zIndex = 2;
     }
+
+    //clear el.nodes from
+    let currentNodes = Objects.filter(this.parser.getNodes(), node => node.region==this.data.controller && node.container=="AS3" );
+    Objects.forEach(currentNodes, node=>node.el = null);
+
     var el = await this.renderControls(this.data.controller, this.parser.getNodes(),"AS3");
     if (el) this.mainArea.appendChild(el);
 
@@ -568,6 +587,10 @@ export class LayoutPage extends HeaderPage {
       Object.assign(node, p.data);
       node.region = this.data.controller;
       node.container = this.selectedNodes[0].container;
+      if (node.color) {
+        node.color = RGBToargb(node.color);
+      }
+
       this.parser.insertNewNode(node);
       this.selectedNodes = [node];
       this.reRender();
@@ -945,43 +968,9 @@ Please make sure to accept all file and directory acess permissions shown by the
       if (target.classList.contains("TabNode")) {
         var layerN = Number(target.getAttribute("layerN"));
         var parentN = Number(target.getAttribute("parentN"));
-        //get tabs that belong to the same controller
-        /** @type {TabNode[]} */
-        var tabs = Objects.filter(this.parser.getNodes(), node=> node.region == this.data.controller && node instanceof TabNode )
-        //get tabs that belong to the same parent
-        var visibleLayers = [layerN];
-        function addParentToVisible(parentN){
-          var parent = Objects.find(tabs, node=> node.layerN == parentN );
-          //add tab parent
-          if (parent) {
-            visibleLayers.unshift(parent.layerN);
-            if (parent.parentN > 0)
-            addParentToVisible(parent.parentN)
-          }
-        }
-        addParentToVisible(parentN);
-        //add all 1st level tabs
-        /*Objects.forEach(tabs, tab=>{
-          if (tab.parentN == 1) {
-            visibleLayers.unshift(tab.layerN);
-          }
-        })*/
-
-        visibleLayers.unshift(1);
-
-        this.visibleLayers = visibleLayers;
-        console.log(this.visibleLayers)
-
-        /*if (this.mainArea.children[0])
-          this.mainArea.children[0].remove();
-        this.mainArea.appendChild(this.renderControls(this.data.controller, this.parser.getNodes(),"AS3"));*/
-        //remember the node
-        /** @type {TabNode} */
         var node = target.UCNode;
-        this.renderMainArea();
-        //re-aquire the target after re-rendering!
+        this.showTabLayer(layerN)
         target = node.el;
-
       }
     }
 
@@ -1007,6 +996,55 @@ Please make sure to accept all file and directory acess permissions shown by the
     }
   }
 
+  /**
+   * @return {TabNode}
+   */
+  getNodeTabNode(node){
+    if (node instanceof TabNode) {
+      return node;
+    }
+
+    let ret = Objects.find(this.parser.getNodes(), n=> n.region == this.data.controller && n instanceof TabNode && n.layerN == node.layerN )
+    return ret;
+  }
+
+  showTabLayer(layerN){
+    /** @type {TabNode[]} */
+    // @ts-ignore
+    var tabs = Objects.filter(this.parser.getNodes(), node=> node.region == this.data.controller && node instanceof TabNode )
+
+    var currentTab = Objects.find(tabs, node=>node.layerN == layerN)
+    var visibleLayers = [];
+
+    /** @param {TabNode} currentTab */
+    function makeParentTabsVisible(currentTab) {
+      let parentTab = Objects.find(tabs, node=> node.layerN == currentTab.parentN )
+      if (!parentTab) return;
+      visibleLayers.unshift(parentTab.layerN);
+      if (parentTab.parentN > 0){
+        makeParentTabsVisible(parentTab)
+      }
+    }
+    makeParentTabsVisible(currentTab);
+    visibleLayers.unshift(1);
+    visibleLayers.push(currentTab.layerN);
+
+    /** @param {TabNode} currentTab */
+    function makeChildLayersFirstVisible(currentTab) {
+      let childTab = Objects.find(tabs, node=> node.parentN == currentTab.layerN )
+      if (!childTab) return;
+      visibleLayers.push(childTab.layerN);
+      makeParentTabsVisible(childTab)
+    }
+    makeChildLayersFirstVisible(currentTab)
+    
+
+    this.visibleLayers = visibleLayers;
+    console.log(this.visibleLayers)
+
+    this.renderMainArea();
+  }
+
   areSelectedElementsSimilar(){
     return this.selectedNodes.every(a => a.constructor.name==this.selectedNodes[0].constructor.name)
   }
@@ -1015,7 +1053,7 @@ Please make sure to accept all file and directory acess permissions shown by the
    * 
    * @param {CNode} node 
    */
-  selectNode(node){
+  selectNode(node, multiple = false){
 
     if (node instanceof PictureNode) {
       this.onEditPictureListClicked().then(p=>{
@@ -1028,9 +1066,25 @@ Please make sure to accept all file and directory acess permissions shown by the
 
       });
     } else {
-      this.selectElement(node.el, false);
+      if (node.el == null) {
+        //node is not yet rendered!
+        //find it and render the whole tree!
+        let nodeTab = this.getNodeTabNode(node);
+        this.showTabLayer(nodeTab?.layerN)
+      }
+
+      this.selectElement(node.el, multiple);
+      this.controlTree.setSelectedNodes(this.selectedNodes);
       this.editSelectedNodes();
     } 
+  }
+
+  /**
+   * 
+   * @param {ControlNode} node 
+   */
+  getParentTabNode(node){
+
   }
 
   /**
@@ -1059,7 +1113,7 @@ Please make sure to accept all file and directory acess permissions shown by the
     }
     //console.log(this.selectedNodes);
     this.selectedNodes.push(node);
-    
+    this.controlTree.setSelectedNodes(this.selectedNodes);
     //console.log(this.selectedNodes);
 
     elem.classList.add("selected");
@@ -1074,6 +1128,11 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
     })
     this.selectedNodes = [];
+    this.controlTree.setSelectedNodes(this.selectedNodes);
+  }
+
+  onTreeControlSelected(node){
+    this.selectNode(node, this.ctrlPressed)
   }
 
   /**
@@ -1307,7 +1366,7 @@ Please make sure to accept all file and directory acess permissions shown by the
         this.data.font = node.font;
         this.data.fontSize = node.fontSize;
         this.data.value = node.value;
-        this.data.color = node.color;
+        this.data.color = argbToRGB(node.color);
       }
 
     } else if (this.selectedNodes.length > 1 && this.areSelectedElementsSimilar()){
@@ -1438,7 +1497,7 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.font = this.data.font;
         node.fontSize = this.data.fontSize;
         node.value = this.data.value;
-        node.color = this.data.color;
+        node.color = RGBToargb(this.data.color);
       }
       
     } else if (this.selectedNodes.length > 1){
@@ -1875,6 +1934,12 @@ var template = `
       <div class="" id="jogarea" ></div>
     </div>
   </div>
+  <div class="right panel tree-container">
+    <div class="panel-head">Controll Tree</div>
+    <div class="panel-body scroll">
+      <div [component]="this.controlTree"  [onControlSelected]="this.onTreeControlSelected"></div>
+    </div>
+  </div>
   <div class="right">
     <div class="buttons mb-1">
       <button type="button" class="" onclick="this.onLoadScreensetClicked()" title="Load Screenset ..."><i class="fas fa-folder-open"></i></button>
@@ -1904,6 +1969,7 @@ var template = `
       <div [component]="this.form"></div>
       
     </div>
+    
     <div class="help-baloon">
       <div><b>Ctrl + LeftMouse</b> to select multiple items</div>
       <div><b>Shift + LeftMouse</b> to drag items</div>

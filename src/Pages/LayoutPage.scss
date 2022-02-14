@@ -68,6 +68,21 @@
         }
       }
     }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      .panel-head {
+        font-weight: bold;
+        padding: 5px;
+        background-color: #e7e7e7;
+      }
+      .panel-body {
+        flex: 1;
+        padding-left: 5px;
+      }
+    }
     .left {
 
     }

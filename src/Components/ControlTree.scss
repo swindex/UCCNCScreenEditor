@@ -1,0 +1,27 @@
+.ControlTree {
+    .tab-node {
+        display: flex;
+        .icon {
+            padding: 0 5px 0 0;
+            cursor: pointer;
+        }
+        &[selected] {
+            background-color: #0056b3;
+            color: white;
+        }
+    }
+    .control-node{
+        &[selected] {
+            background-color: #0056b3;
+            color: white;
+        }
+    }
+    .tab {
+        .controls{
+            margin-left: 10px;
+        }
+        .tabs{
+            margin-left: 10px;
+        }
+    }
+}
