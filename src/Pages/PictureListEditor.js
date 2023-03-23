@@ -1,6 +1,6 @@
 import { Objects } from "leet-mvc/core/Objects";
 import { Alert, Prompt } from "leet-mvc/core/simple_confirm";
-import { DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
+import { Dialog, DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
 import { PictureGallery } from "../Components/PictureGallery";
 import { FileHelpers } from "../FileHelpers";
 import { PictureNode } from "../Parser";
@@ -72,6 +72,23 @@ export class PictureListEditor extends DialogPage {
       Close:()=>{
 
       },
+      "Delete All": ()=>{
+        let p = Dialog("Deleting all pictures!")
+        p.addLabel(null, "You are about to delete all pictures from this controller!")
+        p.addCheck("confirm", "Please check to confirm!", null, true)
+        p.addActionButton("Cancel", null);
+        p.addActionButton("Delete",()=>{
+          if (!p.validate()) {
+            return false;
+          }
+          this.gallery.items.forEach(item=>{
+            this.onRemovePicture(item.picture);
+          })
+          this.destroy();
+        })
+        //prevent immediate descriction of the PictureList
+        return false;
+      },
       "Delete Picture" :()=>{
         if (!this.gallery.selectedItem) {
           Alert("Please select a picture!");
@@ -80,7 +97,8 @@ export class PictureListEditor extends DialogPage {
         this.gallery.items = Objects.filter(this.gallery.items, f=> f.picN != this.gallery.selectedItem.picN);
         this.gallery.setSelectedIndex(null);
         this.onRemovePicture(this.item.picture);
-        return false;
+        this.destroy();
+        return true;
       },
       "Add Picture":()=>{
         if (!this.isFileOpsAllowed()) return false;

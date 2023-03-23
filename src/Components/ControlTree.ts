@@ -1,4 +1,4 @@
-import { CNode, ControlNode, TabNode } from "../Parser";
+import { BackgroundNode, CNode, ControlNode, TabNode } from "../Parser";
 
 import { BaseComponent } from "leet-mvc/components/BaseComponent";
 
@@ -17,7 +17,7 @@ class RootNode{
 
 }
 
-const selectedNodes = [];
+const selectedNodes : ControlNode[] = [];
 
 export class TabTree extends BaseComponent {
 
@@ -32,21 +32,21 @@ export class TabTree extends BaseComponent {
 <div>
     <div class="tab-node" [selected]="this.isNodeSelected(this.tab ? this.tab.tabNode : null)" [if]="this.tab && this.tab.tabNode != null">   
         <div class="icon" onclick="this.onExpandToggle()"  >
-            <i [if]="this.tab.collapsed" class="fas fa-caret-right"></i>
-            <i [if]="!this.tab.collapsed" class="fas fa-caret-down"></i>
+            <i [if]="this.isTabCollapsed()" class="fas fa-caret-right"></i>
+            <i [if]="!this.isTabCollapsed()" class="fas fa-caret-down"></i>
         </div>
-        <div class="name" onclick="this.onControlSelected(this.tab.tabNode)">{{ this.tab.tabNode.constructor.name }} - {{ this.tab.tabNode.layerN }}</div>
+        <div class="name" onclick="this.onControlSelected(this.tab.tabNode)">{{ this.formatName(this.tab.tabNode.constructor.name) }} - {{ this.tab.tabNode.layerN }}</div>
     </div>
     <div class="children">    
-        <div class="tabs" [if]="!this.tab.collapsed">
+        <div class="tabs" [if]="!this.isTabCollapsed()">
             <div class="tab" [foreach]="this.tab.tabNodes as tabNode">
                 <div [component]="this.treeType" [tab]="tabNode" [onControlSelected]="this.onControlSelected"></div>
             </div>
         </div>
-        <div class="controls" [if]="!this.tab.collapsed">
+        <div class="controls" [if]="!this.isTabCollapsed()">
             <div class="control-node" [foreach]="this.tab.controls as control" onclick="this.onControlSelected(control)" [selected]="this.isNodeSelected(control)">
                 <div class="icon"></div>
-                <div class="name">{{ control.constructor.name }} - {{ control.controllN }}</div>
+                <div class="name">{{ this.formatName(control.constructor.name) }} - {{ control.controllN }}</div>
             </div>
         </div>
     </div>
@@ -75,15 +75,36 @@ export class TabTree extends BaseComponent {
 
     }
 
+    formatName(name: string){
+        return name.replace("Node","")
+    }
+
     isNodeSelected(node: ControlNode){
         return selectedNodes.includes(node)
     }
+    isTabCollapsed(){
+        /*if (!this.tab.collapsed){
+            return false;
+        }
+        if (selectedNodes[0]?.layerN == this.tab.tabNode.layerN ) {
+            return this.tab.collapsed = false
+        }
+        if (selectedNodes[0]?.layerN ) {
+            let ret = this.tab.tabNodes.find(el=> el.tabNode.layerN ==selectedNodes[0]?.layerN)
+            if (ret) {
+                return this.tab.collapsed = false;
+            }
+        }*/
+        return this.tab.collapsed
+    }
+
+    
 }
 
 export class ControlTree extends BaseComponent{
     nodes: CNode[] = [];
 
-    selectedNodes: ControlNode[] = [];
+    //selectedNodes: ControlNode[] = [];
 
     tabs: TabTreeNode[] = [];
     treeType: any = null;
@@ -95,7 +116,10 @@ export class ControlTree extends BaseComponent{
     }
 
     setNodes(nodes: CNode[]){
-        nodes = Objects.filter(nodes, function(el){ return el instanceof ControlNode && el.container=="AS3" });
+        nodes = Objects.filter(nodes, function(el){ return el instanceof ControlNode });
+
+        //let tabjog = Objects.filter(nodes, function(el){ return ( el.container=="AS3jog") })
+
         this.tabs = [{
             tabNode: null,
             tabNodes : [],
@@ -130,8 +154,12 @@ export class ControlTree extends BaseComponent{
     }
 
     getTabNodeTabs(nodes: ControlNode[], parentN: number) {
-        let tabs = Objects.filter(nodes, function(el){ return el instanceof TabNode && el.parentN == parentN })
+        let tabs = Objects.filter(nodes, function(el){ return (el instanceof TabNode && el.parentN == parentN) })
         
+        /*let tabjog = Objects.filter(nodes, function(el){ return (el instanceof BackgroundNode && el.container=="AS3jog") })
+        if (tabjog[0])
+            tabs.push(tabjog[0])*/
+
         return tabs.map(tab=>{
             return <TabTreeNode> {
                 tabNode: tab,

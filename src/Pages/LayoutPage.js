@@ -11,7 +11,7 @@ import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_con
 import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
-import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode } from "../Parser";
+import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldtextNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode, ComboNode } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
 import { PictureListEditor } from "./PictureListEditor";
 import { FontsList } from "../Fonts";
@@ -22,6 +22,10 @@ import { FieldNumbers } from "../FieldNumbers";
 import { CheckBoxNumbers } from "../CheckBoxNumbers";
 import { FieldTypes } from "../FieldTypes";
 import { ControlTree } from "../Components/ControlTree";
+import { NodeOperations } from "../NodeOperations";
+import { ColorNumbers } from "../ColorNumbers";
+import { ComboNumbers } from "../ComboNumbers";
+import { Loader } from "leet-mvc/pages/Loader/Loader";
 
 
 export class LayoutPage extends HeaderPage {
@@ -94,17 +98,26 @@ export class LayoutPage extends HeaderPage {
     this.data = Objects.copy(this.dataClean);
 
     this.controlPropertiesForm = { type:"form", class:"box", displayRule:"true_if_not:controllType,null", items:[
-      { type:"label", value:"Control Properties"},
-      { type:"text", title:"Control Type", name:"controllTypeName", attributes:{disabled:true}},
+      { type:"label", value:"Element Properties"},
+      { type:"text", title:"Element Type", name:"controllTypeName", attributes:{disabled:true}},
       { type:"select", name:"fieldType", title:"Fild Type", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name}`, validateRule:"required", class:"", items: Objects.copy(FieldTypes)},
 
-      { type:"text", title:"Control Number", name:"controllN", displayRule:`true_if:controllType,${ListNode.name},${ColorNode.name},${BackgroundNode.name}` },
+      { type:"select", title:"List Number", name:"listN", displayRule:`true_if:controllType,${ListNode.name}`, items:[
+        { value:"1", title: "1 - Profile List"},
+        { value:"2", title: "2 - Event Log"},
+      ] },
+      { type:"function-select", title:"Combo Number", name:"comboN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${ComboNode.name}`, items: getButtonsDropDown(ComboNumbers), attributes:{showItemsOnFocus:true}  },
+      { type:"function-select", title:"Color Number", name:"colorN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${ColorNode.name}`, items: getButtonsDropDown(ColorNumbers), attributes:{showItemsOnFocus:true}  },
       { type:"function-select", title:"Button Number", name:"buttonN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${ButtonNode.name}`, items: getButtonsDropDown(ButtonNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Led Number", name:"ledN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${LedNode.name}`, items: getButtonsDropDown(LedNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Field Number", name:"fieldN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items: getButtonsDropDown(FieldNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Checkbox Number", name:"checkBoxN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${CheckboxNode.name}`, items: getButtonsDropDown(CheckBoxNumbers), attributes:{showItemsOnFocus:true} },
       { type:"number", title:"Parent Tab Layer Number", name:"parentN", displayRule:`true_if:controllType,${TabNode.name}`, validateRule:"required|numeric|min:0" },
       { type:"number", title:"Layer Number", name:"layerN", validateRule:"numeric|min:0"},
+      { type:"select", name:"container", title:"Element Area", placeholder:"", displayRule:`true_if_not:controllType,${TabNode.name}`, validateRule:"required", class:"", items: [
+        { value:"AS3", title: "Main Area"},
+        { value:"AS3jog", title: "Jog Area"},
+      ]},
       { type:"form", class:"row", items:[
         { type:"number", name:"x", title:"X", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
         { type:"number", name:"y", title:"Y", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
@@ -150,6 +163,9 @@ export class LayoutPage extends HeaderPage {
         { value:"center", title: "Center"},
         { value:"right", title: "Right"},
       ]},
+
+      { type:"text", name:"fieldFilter", title:"Text Filter", placeholder:"0123456789.-", displayRule:`true_if:controllType,${FieldNode.name}`, validateRule:""},
+      { type:"text", name:"fieldText", title:"Field Text", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name}`, validateRule:""},
     ]},
 
     this.form = new Forms([
@@ -313,7 +329,7 @@ export class LayoutPage extends HeaderPage {
 
     
     DOM(this.workArea).on("mousedown",(event)=>{
-      if (!this.shiftPressed && event.target.classList.contains("UC-control") && !event.target.classList.contains("selected")){
+      if (!this.shiftPressed && /*event.target.classList.contains("UC-control") &&*/ !event.target.classList.contains("selected")){
         //start selecting
         event.preventDefault();
         
@@ -322,7 +338,7 @@ export class LayoutPage extends HeaderPage {
         var x1=event.clientX + this.workArea.scrollLeft - WA.offsetLeft()
         var y1=event.clientY + this.workArea.scrollTop - WA.offsetTop()
         var x2=0, y2=0;
-        var parentElement = DOM(event.target).closest("#mainarea").first() || DOM(event.target).closest("#jogarea").first()
+        var parentElement = (DOM(event.target).closest("#mainarea").first() || DOM(event.target).closest("#jogarea").first()) || event.target
         
         DOM(this.workArea).on("mousemove",(event)=>{
           x2=event.clientX + this.workArea.scrollLeft - WA.offsetLeft()
@@ -489,23 +505,22 @@ export class LayoutPage extends HeaderPage {
   }
 
   onDeleteControlsClicked(){
-    Confirm(`Are you sure you want to remove the ${this.selectedNodes.length} selected controls?`,()=>{
-      Objects.forEach(this.selectedNodes, node=> {
-        /*if (node.picture){
-          this.parser.removeNode(node.picture);
-        }*/
-        /*if (node.filterField){
-          this.parser.removeNode(node.filterField);
-        }*/
-        /*if (node.setField){
-          this.parser.removeNode(node.setField);
-        }*/
-        this.parser.removeNode(node);
-      })
+    let p = Dialog("Delete Selected");
+    p.addLabel(null, "Are you sure you want to remove the "+this.selectedNodes.length+" selected control(s)?")
+    if (this.selectedNodes.find(el=>el instanceof TabNode)) {
+      p.addCheck("recursive", "Recursively delete contents of TabNodes");
+    }
+    p.addActionButton("Cancel", null)
+    p.addActionButton("Yes",()=>{
+      try {
+        NodeOperations.removeNodes(this.selectedNodes, this.parser, p.data.recursive);
+      } catch (err){
+        Alert(err.message, null, "Something Wrong!")
+      }
       this.selectedNodes = [];
       this.reRender();
       this.saveHistorySnapshot();
-    },"Delete Selected");
+    });
   }
 
   onDuplicateControlClicked(){
@@ -516,12 +531,12 @@ export class LayoutPage extends HeaderPage {
 
       this.parser.insertNewNode(newNode)
       //Insert node filter
-      if (newNode.filterField){
-        //this.parser.nodes.splice(index+1,0, newNode.filterField);
+      if (newNode.fieldFilter){
+        //this.parser.nodes.splice(index+1,0, newNode.fieldFilter);
       }
       //Insert node value setter
-      if (newNode.setField){
-        //this.parser.nodes.splice(index+1,0, newNode.setField);
+      if (newNode.fieldText){
+        //this.parser.nodes.splice(index+1,0, newNode.fieldText);
       }
 
     })
@@ -535,8 +550,8 @@ export class LayoutPage extends HeaderPage {
       return;
     }
 
-    var p = Dialog("Create Control");
-    p.addSelect("controllType", "Control Type", null, true, [
+    var p = Dialog("Create Element");
+    p.addSelect("controllType", "Element Type", null, true, [
       { value: null, title: "Please select..." },
       { value: TabNode.name, title: "Tab" },
       { value: ButtonNode.name, title: "Button" },
@@ -553,7 +568,7 @@ export class LayoutPage extends HeaderPage {
       { value: SliderNode.name, title: "Slider" }
     ])
     
-    //remove the Control Type and control Properties labels
+    //remove the Element Type and element Properties labels
     var tpl = Objects.copy(this.controlPropertiesForm);
     tpl.items.splice(0,2);
 
@@ -585,6 +600,29 @@ export class LayoutPage extends HeaderPage {
         node[key] = value;
       })*/
       Object.assign(node, p.data);
+      if (node instanceof FieldNode) {
+        if (p.data.fieldText) {
+          node.fieldText = new SetfieldtextNode();
+          node.fieldText.container = node.container;
+          node.fieldText.controllN = node.controllN;
+          this.parser.insertNewNode(node.fieldText);
+          node.fieldText.value = p.data.fieldText;
+        } else {
+          this.parser.removeNode(node.fieldText)
+          node.fieldText = null;
+        }
+
+        if (p.data.fieldFilter) {
+          node.fieldFilter = new FilterfieldtextNode();
+          node.fieldFilter.container = node.container;
+          node.fieldFilter.controllN = node.controllN;
+          this.parser.insertNewNode(node.fieldFilter);
+          node.fieldFilter.value = p.data.fieldFilter;
+        } else {
+          this.parser.removeNode(node.fieldFilter)
+          node.fieldFilter = null;
+        }
+      }
       node.region = this.data.controller;
       node.container = this.selectedNodes[0].container;
       if (node.color) {
@@ -611,7 +649,7 @@ export class LayoutPage extends HeaderPage {
   async onEditPictureListClicked(){
     var p = Injector.Nav.push(new PictureListEditor(this.dirHandle));
     p.gallery.items = await this.getCurrentPictureList();
-    p.pictures = this.pictures;
+    //p.pictures = this.pictures;
     p.container = this.selectedNodes[0]?.container || 'AS3';
     p.region = this.data.controller;
     p.allowFileOperations = !!this.fileHandle;
@@ -642,7 +680,7 @@ export class LayoutPage extends HeaderPage {
     
     var p = Dialog("Screen Properties");
         
-    //remove the Control Type and control Properties labels
+    //remove the Element Type and Element Properties labels
       
     p.controls = [
       { type:"label", value:"Main Screen Size" },
@@ -768,6 +806,38 @@ export class LayoutPage extends HeaderPage {
     }
   }
 
+  onApplyNodesStyleOnOtherControllersClicked(){
+    var p = Dialog("Copy Element Properties");
+    p.addLabel(null, "This dialog allows you to copy the styling properties of one element onto other similar elements in different controllers. This means that you can easily apply the same styling to multiple elements without having to manually adjust each one individually. Simply select the element whose properties you want to copy, and then select the target controllers where you want to apply the same styling. The function will automatically transfer the selected properties to the target elements, making it easier for you to maintain a consistent design throughout your screenset.")
+
+    p.addLabel(null, "Select the Controllers to apply the changes to:")
+
+    let controllers = this.parser.getControllers();
+    controllers.forEach(controller=>{
+        if (controller != this.data.controller){
+          p.addCheck(controller, controller)
+        }
+    })
+
+    p.addActionButton("Cancel", null);
+    p.addActionButton("Apply", ()=>{
+
+      let regions = controllers.filter(el=>{
+        return p.data[el]
+      })
+
+      if (regions.length==0) {
+        return false;
+      }
+
+      this.selectedNodes.forEach(node=>{
+        NodeOperations.applyNodeStyleToNodesInOtherRegions(node, regions, this.parser.getNodes())
+      })
+      
+    })
+    
+  }
+
   get isSelectedElementPictureGenSupported(){
     return this.selectedNodes && this.selectedNodes.length == 1 &&  (this.selectedNodes[0] instanceof ButtonNode || this.selectedNodes[0] instanceof TabNode || this.selectedNodes[0] instanceof BackgroundNode || this.selectedNodes[0] instanceof LedNode )
   }
@@ -885,7 +955,7 @@ Please make sure to accept all file and directory acess permissions shown by the
 
   async onSaveAsScreensetClicked(){
     if (!this.isFileOpsAllowed()) return;
-
+    let loader = Loader().show("Saving the Screenset!")
     var fileHandle = await window.showSaveFilePicker({
       types: [
         {
@@ -902,13 +972,21 @@ Please make sure to accept all file and directory acess permissions shown by the
         },
       ],
     });
-    if (!fileHandle) { return }
+    if (!fileHandle) { 
+      loader.hide();
+      return
+    }
 
     this.fileHandle = fileHandle;
-    let gcode = this.parser.getCCode();
-    await FileHelpers.writeTextToFileHandle(gcode,  this.fileHandle);
+    let gcode = this.parser.getCCode(true);
+    if (await FileHelpers.writeTextToFileHandle(gcode,  this.fileHandle)) {
+      this.pendingSave = false;
+    } else {
+      Alert("Wasn't able to save the screenset!\nPlease try again.",null, "Save Error");
+    }
+    loader.hide();
       
-    this.pendingSave = false;
+    
   }
 
   isFileOpsAllowed(){
@@ -922,8 +1000,18 @@ Please make sure to accept all file and directory acess permissions shown by the
   async onSaveScreensetClicked(){
     if (!this.isFileOpsAllowed()) return;
 
-    await FileHelpers.writeTextToFileHandle(this.parser.getCCode(), this.fileHandle);
-    this.pendingSave = false;
+    let loader = Loader().show("Saving the Screenset!")
+
+    await FileHelpers.verifyPermission(this.fileHandle, true)
+
+    if (await FileHelpers.writeTextToFileHandle(this.parser.getCCode(true), this.fileHandle)){
+      this.pendingSave = false;
+    } else {
+      Alert("Wasn't able to save the screenset!\nPlease try again or use the 'Save As' option.", null, "Save Error");
+    }
+    loader.hide();
+    
+    
   }
 
   verifyPermission(fileHandle, readWrite) {
@@ -1040,7 +1128,7 @@ Please make sure to accept all file and directory acess permissions shown by the
     
 
     this.visibleLayers = visibleLayers;
-    console.log(this.visibleLayers)
+    //console.log(this.visibleLayers)
 
     this.renderMainArea();
   }
@@ -1278,6 +1366,7 @@ Please make sure to accept all file and directory acess permissions shown by the
     
     if (this.selectedNodes.length == 1){
       var node = this.selectedNodes[0];
+      this.data.container = node.container;
       this.data.controllType = node.constructor.name;
       this.data.controllTypeName = node.constructor.name;
       this.data.x = node.x;
@@ -1314,6 +1403,8 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
       if (node instanceof FieldNode) {
         this.data.fieldType = node.fieldType;
+        this.data.fieldText = node.fieldText?.value
+        this.data.fieldFilter = node.fieldFilter?.value
       }
       if (node instanceof FieldNode || node instanceof SliderNode) {
         this.data.fieldN = node.controllN;
@@ -1327,6 +1418,10 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
       if (node instanceof CheckboxNode) {
         this.data.checkBoxN = node.controllN;
+      }
+
+      if (node instanceof ComboNode) {
+        this.data.comboN = node.controllN;
       }
 
       if (node instanceof SliderNode) {
@@ -1348,6 +1443,11 @@ Please make sure to accept all file and directory acess permissions shown by the
         this.data.fontSize = node.fontSize;
         this.data.color = argbToRGB(node.color);
         this.data.transparency = node.transparency;
+        this.data.listN = node.controllN;
+      }
+
+      if (node instanceof ColorNode) {
+        this.data.colorN = node.controllN;
       }
 
       if (node instanceof TabNode) {
@@ -1410,6 +1510,11 @@ Please make sure to accept all file and directory acess permissions shown by the
   updateSelectedNodes(){
     if (this.selectedNodes.length == 1){
       var node = this.selectedNodes[0];
+
+      if (this.data.container){
+        node.container = this.data.container;
+      }
+      
       node.x = this.data.x;
       node.y = this.data.y;
 
@@ -1459,10 +1564,42 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.align = this.data.align;
         node.min = Number(this.data.min);
         node.max = Number(this.data.max);
+
+        if (this.data.fieldText) {
+          if (!node.fieldText) {
+            node.fieldText = new SetfieldtextNode();
+            node.fieldText.region = node.region;
+            node.fieldText.container = node.container;
+            node.fieldText.controllN = node.controllN;
+            this.parser.insertNewNode(node.fieldText);
+          }
+          node.fieldText.value = this.data.fieldText;
+        } else {
+          this.parser.removeNode(node.fieldText)
+          node.fieldText = null;
+        }
+
+        if (this.data.fieldFilter) {
+          if (!node.fieldFilter) {
+            node.fieldFilter = new FilterfieldtextNode();
+            node.fieldText.region = node.region;
+            node.fieldFilter.container = node.container;
+            node.fieldFilter.controllN = node.controllN;
+            this.parser.insertNewNode(node.fieldFilter);
+          }
+          node.fieldFilter.value = this.data.fieldFilter;
+        } else {
+          this.parser.removeNode(node.fieldFilter)
+          node.fieldFilter = null;
+        }
         
       }
       if (node instanceof CheckboxNode) {
         node.controllN = this.data.checkBoxN;
+      }
+
+      if (node instanceof ComboNode) {
+        node.controllN = this.data.comboN;
       }
 
       if (node instanceof SliderNode) {
@@ -1491,6 +1628,11 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.fontSize = this.data.fontSize;
         node.color =  RGBToargb(this.data.color);
         node.transparency = this.data.transparency;
+        node.controllN = this.data.listN;
+      }
+
+      if (node instanceof ColorNode) {
+        node.controllN = this.data.colorN;
       }
 
       if (node instanceof LabelNode) {
@@ -1538,20 +1680,30 @@ Please make sure to accept all file and directory acess permissions shown by the
   parse(text, pendingSave = false){
     this.clearAll()
     
-
-    this.parser = new Parser()
-    this.parser.parse(text);
-
-    this.settings = Objects.find(this.parser.getNodes(), node=> node instanceof UCCNCEditorSettings);
-
-    //this.renderControls(this.parser.getNodes());
-    this.form.fields['controller'].items = this.getControllerItems()
-    this.data.controller = this.form.fields['controller'].items[0].value;
+    let loader = Loader().show("Loading screenset...")
     setTimeout(() => {
-      this.form.onChange();
-      this.saveHistorySnapshot()
-      this.pendingSave = pendingSave;
-    }, 100);
+      try {
+        this.parser = new Parser()
+        this.parser.parse(text);
+    
+        this.settings = Objects.find(this.parser.getNodes(), node=> node instanceof UCCNCEditorSettings);
+    
+        //this.renderControls(this.parser.getNodes());
+        this.form.fields['controller'].items = this.getControllerItems()
+        this.data.controller = this.form.fields['controller'].items[0].value;
+        setTimeout(() => {
+          this.form.onChange();
+          this.saveHistorySnapshot()
+          this.pendingSave = pendingSave;
+        }, 100);
+          
+      } catch (error) {
+        
+      } finally {
+        loader.hide();
+      }  
+    }, 50);
+    
   
   }
 
@@ -1599,13 +1751,13 @@ Please make sure to accept all file and directory acess permissions shown by the
     // @ts-ignore
     var pictures = Objects.keyBy(Objects.filter(this.pictures, pic=>pic.container==container), 'controllN');
   
-    /** @type {SetfieldNode[]} */
+    /** @type {SetfieldtextNode[]} */
     // @ts-ignore
-    var setFields = Objects.keyBy(Objects.filter(nodes, n=> (n instanceof SetfieldNode )), 'controllN');
+    //var setFields = Objects.keyBy(Objects.filter(nodes, n=> (n instanceof SetfieldtextNode )), 'controllN');
 
     /** @type {FilterfieldtextNode[]} */
     // @ts-ignore
-    var filterFields = Objects.keyBy(Objects.filter(nodes, n=> (n instanceof FilterfieldtextNode )), 'controllN');
+    //var filterFields = Objects.keyBy(Objects.filter(nodes, n=> (n instanceof FilterfieldtextNode )), 'controllN');
 
     Objects.forEach(nodes, (anyNode)=>{
       // @ts-ignore
@@ -1747,21 +1899,10 @@ Please make sure to accept all file and directory acess permissions shown by the
          
           el.classList.add(node.fieldType);
           
-          if (filterFields[node.controllN]) {
-            node.filterField = filterFields[node.controllN]
-          }
-
-          if (setFields[node.controllN]) {
-            node.setField = setFields[node.controllN]
-          }
-
-          if (setFields[node.controllN] != null && Text.toString(setFields[node.controllN].value).trim()) {
-            el.textContent = setFields[node.controllN].value;
-            //el.style.border = "none"
-            //el.style.height = "auto";
-
+          if (node.fieldText != null && Text.toString(node.fieldText.value).trim()) {
+            el.textContent = node.fieldText.value;
           } else {
-            if ( (node.min || node.max) || (filterFields[node.controllN] && Text.toString(filterFields[node.controllN].value).trim().includes("."))) {
+            if ( (node.min || node.max) || (node.fieldFilter && Text.toString(node.fieldFilter.value).trim().includes("."))) {
               el.textContent = "0.0000"
               //el.style.border = "none"
               //el.style.height = "auto";
@@ -1871,6 +2012,10 @@ Please make sure to accept all file and directory acess permissions shown by the
     }, "Contact Us",`${p1}${p2}.${p3}`);
   }
 
+  onLocateElementsInTreeClicked(){
+
+  }
+
   get template (){
     return super.extendTemplate(super.template, template);
   }
@@ -1935,7 +2080,7 @@ var template = `
     </div>
   </div>
   <div class="right panel tree-container">
-    <div class="panel-head">Controll Tree</div>
+    <div class="panel-head" style="display:flex;">Element Tree<i class="fas fa-search-location" style="margin-left: auto;"></i></div>
     <div class="panel-body scroll">
       <div [component]="this.controlTree"  [onControlSelected]="this.onTreeControlSelected"></div>
     </div>
@@ -1951,9 +2096,10 @@ var template = `
     <div class="buttons mb-1">
       <button type="button" class="" [disabled]="this.history.length <= 1" title="Undo" onclick="this.onUndoClicked()"><i class="fas fa-undo"></i></button>
       <button type="button" [if]="this.selectedNodes.length > 0" class="" title="Duplicate Selected Controls" onclick="this.onDuplicateControlClicked()"><i class="fas fa-copy"></i></button>
-      <button type="button" [if]="this.data.controller" class="" title="Create Control" onclick="this.onCreateControlClicked()"><i class="fas fa-plus-square"></i></button>
+      <button type="button" [if]="this.data.controller" class="" title="Create Element" onclick="this.onCreateControlClicked()"><i class="fas fa-plus-square"></i></button>
       <button type="button" [if]="this.selectedNodes.length > 0" class="danger" title="Delete Selected Controls" onclick="this.onDeleteControlsClicked()"><i class="fas fa-trash-alt"></i></button>
       <button type="button" [if]="this.isSelectedElementPictureGenSupported" class="" title="Generate Button Picture" onclick="this.onGenerateButtonClicked()"><i class="fas fa-file-image"></i></button>
+      <button type="button" [if]="this.selectedNodes.length > 0" class="" title="Apply the selected Controls' style on other Controllers" onclick="this.onApplyNodesStyleOnOtherControllersClicked()"><i class="fas fa-project-diagram"></i></button>
  
     </div>
     <div class="buttons mb-1">

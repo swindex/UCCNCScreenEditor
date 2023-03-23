@@ -14,7 +14,7 @@ const { OptionsDialogPage } = require("leet-mvc/pages/OptionsDialogPage/OptionsD
 export class FunctionSelector extends BaseComponent{
   constructor(){
     super();
-
+    this.title="Hooo"
     /** @type {ResolvedPicture[]} */
     this.items = []
     this.value = null;
@@ -42,7 +42,7 @@ export class FunctionSelector extends BaseComponent{
       Alert("Items is empty!")
     }
 
-    var p = Injector.Nav.push(new FunctionSelectorPage());
+    var p = Injector.Nav.push(new FunctionSelectorPage("Select Controll Function"));
     p.items = Objects.copy(this.items);
     p.selectedValue = this.value;
     p.onItemSelected = (item) =>{

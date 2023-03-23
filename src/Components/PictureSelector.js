@@ -35,14 +35,17 @@ export class PictureSelector extends BaseComponent{
       Alert("Items is empty!")
     }
 
-    var p = Injector.Nav.push(new DialogPage());
+    var p = Injector.Nav.push(new DialogPage("Select Picture"));
     var pS = new PictureGallery();
     pS.items = this.items;
+
+
     pS.onItemClick = (item, index)=>{
       p.destroy();
       this.value = item.picN;
       this.onChange({target: DOM(this.container).find('input').first()})
     }
+    
     p.buttons = {
       Close:()=>{
         p.destroy();
@@ -51,6 +54,10 @@ export class PictureSelector extends BaseComponent{
 
     // @ts-ignore
     p.content = pS;
+
+    p.onVisible = ()=>{
+      pS.setSelectedIndex(this.items.findIndex(el=>el.picN == this.value))
+    }
     /*p.onItemClicked = (item) =>{
       this.value = item.value;
       this.onChange({target: DOM(this.container).find('input').first()})

@@ -60,12 +60,12 @@ export class PictureGallery extends BaseComponent {
 
   }
 
-  setSelectedIndex(index){
+  setSelectedIndex(index, scrolldelay){
     this.selectedIndex = index;
     this.selectedItem = this.items[index];
     setTimeout(() => {
       DOM(this.container).find(".PictureGallery [selected]").first().scrollIntoView();
-    }, 16);
+    }, scrolldelay);
   }
 
   _onItemClick(item, index) {

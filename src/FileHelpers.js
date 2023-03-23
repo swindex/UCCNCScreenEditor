@@ -2,26 +2,22 @@ import { Injector } from "leet-mvc/core/Injector";
 import { FileSystemFilePicker } from "./Pages/FileSystemFilePicker/FileSystemFilePicker";
 
 export const FileHelpers = {
-  verifyPermission(fileHandle, readWrite = false) {
+  async verifyPermission(fileHandle, readWrite = false) {
     const options = {};
     options.mode = 'read';
     if (readWrite) {
       options.mode = 'readwrite';
     }
     // Check if permission was already granted. If so, return true.
-    return fileHandle.queryPermission(options).then(res=> {
-      if (res == 'granted')
+    let res = await fileHandle.queryPermission(options).catch(err=>{console.error(err); return false})
+    if (res != 'granted') {
+        res = await fileHandle.requestPermission(options).catch(err=>{console.error(err); return false})
+    }
+    if (res == 'granted')
         return fileHandle
-      else
-        return fileHandle.requestPermission(options).then(res=> {
-          if (res == 'granted')
-            return fileHandle
-          else
-            return false
-        })  
-    }).catch(err =>{
-      return false;
-    })
+    else
+        return false
+      
   },
 
   async saveCanvasToFileHandle(canvas, fileHandle){
@@ -39,6 +35,9 @@ export const FileHelpers = {
       var writable = await fileHandle.createWritable();
       await writable.write(text);
       writable.close();
+      return true;
+    } else {
+      return false;
     }
   },
 

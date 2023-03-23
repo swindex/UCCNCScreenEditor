@@ -1,16 +1,17 @@
 import { DOM } from "leet-mvc/core/DOM";
 import { Objects } from "leet-mvc/core/Objects";
 import { DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
-import * as style from "./FunctionSelectorPage.scss";
+import "./FunctionSelectorPage.scss";
 export class FunctionSelectorPage extends DialogPage {
-  constructor(){
-    super();
+  constructor(title){
+    super(title);
 
     this.selectedValue = null;
     this.selectedItem = null;
     this.items = [];
     this.filteredItems = [];
     this.searchText = null;
+    this.content = ""
     this.buttons = {
       Close: null,
       Select: ()=>{

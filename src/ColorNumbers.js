@@ -1,0 +1,17 @@
+export const ColorNumbers = [
+    { value:"1", title:"Undone path color" },
+    { value:"2", title:"Done path color" },
+    { value:"3", title:"Rapid path color" },
+    { value:"4", title:"TCP marker color" },
+    { value:"5", title:"Background color" },
+    { value:"6", title:"Boundaries color" },
+    { value:"7", title:"Interperetable codes color" },
+    { value:"8", title:"Non-interperetable codes color" },
+    { value:"9", title:"Zero marker color" },
+    { value:"10", title:"Selected code highlight color" },
+    { value:"11", title:"DROs warning color" },
+    { value:"12", title:"Rotation point marker" },
+    { value:"13", title:"Radius offset path color" },
+    { value:"14", title:"Checkboxes fill color" },
+    { value:"15", title:"Toolpath dimensions color" },
+]

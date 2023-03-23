@@ -20,7 +20,7 @@ export class ColorPicker extends BaseComponent{
     this.image = null;
     this.template = `<div class="fieldrow">
       <input type="text" bind="this.valueT" [attribute]="this.attributes" autocomplete="off" onchange = "this._onChange($event)" />
-      <input type="color" bind="this.valueC"  style="width:2em;position: absolute; right: 0; top: 0;" autocomplete="off" onchange = "this._onChange($event)" />
+      <input type="color" bind="this.valueC"  style="width: 2em;position: absolute;right: 0;top: 0;height: 1.75em;" autocomplete="off" onchange = "this._onChange($event)" />
     </div>`
   }
 
