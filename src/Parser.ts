@@ -11,7 +11,7 @@ console.log('AS3.Addlist("Arial", "left", 18, -12212238, -1, 1, 300, 80, 380, 28
 
 export class Parser {
   nodes: CNode[] = [];
-  controllers: string[] = []
+  regions: string[] = []
   classes = [
     UCCNCEditorSettings,
     ButtonJSONNode,
@@ -110,6 +110,35 @@ export class Parser {
       }
       return ret;
     })
+
+    //Order background nodes
+    if (nodeType == TabNode) {
+      nodes = nodes.sort((elA: TabNode, elB: TabNode)=>{
+        return elA.layerN - elB.layerN;
+      })
+    }
+    if (nodeType == BackgroundNode) {
+      nodes = nodes.sort((elA: BackgroundNode, elB: BackgroundNode)=>{
+        return elA.layerN - elB.layerN;
+      })
+    }
+    if (nodeType == PictureNode) {
+      nodes = nodes.sort((elA: PictureNode, elB: PictureNode)=>{
+        return elA.controllN - elB.controllN;
+      })
+    }
+    if (nodeType == ButtonNode) {
+      nodes = nodes.sort((elA: ButtonNode, elB: ButtonNode)=>{
+        return elA.controllN - elB.controllN;
+      })
+    }
+    if (nodeType == FieldNode) {
+      nodes = nodes.sort((elA: FieldNode, elB: FieldNode)=>{
+        return elA.controllN - elB.controllN;
+      })
+    }
+
+
     return nodes;
   }
 
@@ -234,7 +263,7 @@ export class Parser {
 
 
 
-    if (this.nodes[index] instanceof SetfieldtextNode || this.nodes[index] instanceof FilterfieldtextNode) {
+    if (node instanceof SetfieldtextNode || node instanceof FilterfieldtextNode) {
       //get index of the partent FieldNode
       index = this.getLastNodeIndexWhere(function(el){
         return (el.region == node.region && el.container==node.container && el instanceof FieldNode && el.controllN == node.controllN)
@@ -243,7 +272,15 @@ export class Parser {
         throw Error(`Can't fint the parent FieldNode ${node.controllN}`)
       }
     } else {
+      //put background node in order with other ones
+      if (node instanceof BackgroundNode) {
+        index = this.getLastNodeIndexWhere(function(el){
+          return (el.region == node.region && el.container==node.container && el.constructor.name == node.constructor.name && node.layerN < el.layerN)
+        })
+        if (index) index ++;
+      }
       //Find the last occurence of the same type of element in this region
+      if (index == null)
       index = this.getLastNodeIndexWhere(function(el){
         return (el.region == node.region && el.container==node.container && el.constructor.name == node.constructor.name)
       })
@@ -278,13 +315,16 @@ export class Parser {
 
   removeNode(node) {
     if (!node) return;
-    this.nodes = Objects.filter(this.nodes, (el)=>{
-      if (node instanceof FieldNode) {
-        this.removeNode(node.fieldText)
-        this.removeNode(node.fieldFilter)
-      }
+    this.nodes = this.nodes.filter((el)=>{
       return el !== node;
-    })
+    });
+    if (node instanceof FieldNode) {
+      this.removeNode(node.fieldText)
+      this.removeNode(node.fieldFilter)
+    }
+    if (node instanceof TabNode) {
+      this.removeNode(this.nodes.find((stn)=> stn instanceof SelectLayerNode && stn.region==node.region && stn.container == node.container && stn.layerN == node.layerN))
+    }
   }
 
   /**
@@ -292,7 +332,13 @@ export class Parser {
    * @param {string} text 
    */
   parse(text:string){
-    this.controllers = []
+    this.regions = []
+
+    //keep fieldnodes in cache in order to quickly assing tets and formats!
+    var fieldHash = {}
+
+    var cRegion = null;
+
     var nodes_s = text.split(/\n/g);
     this.nodes = Objects.map(nodes_s, (line)=>{
       var node = null;
@@ -300,7 +346,8 @@ export class Parser {
 
 
       if (node = RegionStartNode.parse(line)) {
-        this.controllers.push(node.region);
+        this.regions.push(node.region);
+        cRegion = node.region;
         return node;
       }
 
@@ -309,13 +356,18 @@ export class Parser {
         return node;
       });
 
+      if (node instanceof FieldNode) {
+        fieldHash[cRegion+":"+node.container+":"+node.controllN] = node;
+      }
+
       if (node) 
         return node;
 
       return new TextNode(line)
     })
     
-    var cRegion = null;
+    cRegion = null;
+
     this.nodes.forEach((node)=>{
       //Assign node regions
       if (node instanceof RegionStartNode) {
@@ -327,15 +379,13 @@ export class Parser {
       }
       //assign field nodes their texts and filters:
       if (node instanceof SetfieldtextNode) {
-        let field = <FieldNode>(<any[]>this.nodes).find((el:FieldNode)=>el instanceof FieldNode && el.controllN == node.controllN && el.region == node.region  && el.container == node.container)
-        if (field){
-          field.fieldText = node;
+        if (fieldHash[node.region+":"+node.container+":"+node.controllN]) {
+          fieldHash[node.region+":"+node.container+":"+node.controllN].fieldText = node;
         }
       }
       if (node instanceof FilterfieldtextNode) {
-        let field = <FieldNode>(<any[]>this.nodes).find((el:FieldNode)=>el instanceof FieldNode && el.controllN == node.controllN && el.region == node.region  && el.container == node.container)
-        if (field){
-          field.fieldFilter = node;
+        if (fieldHash[node.region+":"+node.container+":"+node.controllN]) {
+          fieldHash[node.region+":"+node.container+":"+node.controllN].fieldFilter = node;
         }
       }
       if (node instanceof RegionEndNode) {
@@ -371,8 +421,8 @@ export class Parser {
     return this.nodes;
   }
 
-  getControllers(){
-    return this.controllers;
+  getRegions(){
+    return this.regions;
   }
 
   /**
@@ -385,12 +435,12 @@ export class Parser {
       nodes = nodes.concat(this.getNodesWhere(null,null,UCCNCEditorSettings));
       nodes = nodes.concat(this.getNodesWhere(null,null,ButtonJSONNode));
 
-      this.controllers.forEach((region)=>{
+      this.regions.forEach((region)=>{
         this.writeOrder().forEach(wo=>{
           nodes = nodes.concat(this.getNodesWhere(region,wo.screenName,wo.nodeType));
         })
       })
-
+      this.nodes = nodes;
     } else {
       nodes=this.nodes;
     }
@@ -400,6 +450,7 @@ export class Parser {
       if (line !== null && line.trim().length > 0)
         ret.push(line);
     })
+
     return ret.join('\n');
   }
 }
@@ -560,27 +611,27 @@ export class ControlWNode extends ControlNode {
 }
 
 export class TabNode extends ControlWHNode {
-  firstEmpty: string = "";
+  label: string = "";
   font: string = "";
   align: string = "";
-  n24: number = 24;
-  n0: number = 24;
+  labelW: number = 24;
+  labelH: number = 24;
   parentN: number = 0;
   picN: number | null = null;
   picture: PictureNode | null = null;
 
   static parse(cCode: string = ""): TabNode | null {
     if (!cCode) return null;
-    const m = cCode.match(/^(?<container>AS3|AS3jog)\.Addtab\s*\(\s*"(?<firstEmpty>(?:\\.|[^\\"])*)"\s*,\s*"(?<font>(?:\\.|[^\\"])*)"\s*,\s*"(?<align>(?:\\.|[^\\"])*)"\s*,\s*(?<n24>\d*)\s*,\s*(?<n0>\d*)\s*,\s*(?<x>\-?[\d\.]*)\s*,\s*(?<y>\-?[\d\.]*)\s*,\s*(?<w>[\d\.]*)\s*,\s*(?<h>[\d\.]*)\s*,\s*(?<picN>\d*)\s*,\s*(?<layerN>\d*)\s*,\s*(?<parentN>\d*)\s*\)\s*;\s*/);
+    const m = cCode.match(/^(?<container>AS3|AS3jog)\.Addtab\s*\(\s*"(?<label>(?:\\.|[^\\"])*)"\s*,\s*"(?<font>(?:\\.|[^\\"])*)"\s*,\s*"(?<align>(?:\\.|[^\\"])*)"\s*,\s*(?<labelW>\d*)\s*,\s*(?<labelH>\d*)\s*,\s*(?<x>\-?[\d\.]*)\s*,\s*(?<y>\-?[\d\.]*)\s*,\s*(?<w>[\d\.]*)\s*,\s*(?<h>[\d\.]*)\s*,\s*(?<picN>\d*)\s*,\s*(?<layerN>\d*)\s*,\s*(?<parentN>\d*)\s*\)\s*;\s*/);
     if (!m) return null;
 
     const ret = new TabNode();
     ret.container = ScreenNameFromString(m.groups!.container);
-    ret.firstEmpty = m.groups!.firstEmpty;
+    ret.label = m.groups!.label;
     ret.font = m.groups!.font;
     ret.align = m.groups!.align;
-    ret.n24 = Number(m.groups!.n24);
-    ret.n0 = Number(m.groups!.n0);
+    ret.labelW = Number(m.groups!.labelW);
+    ret.labelH = Number(m.groups!.labelH);
     ret.x = Number(m.groups!.x);
     ret.y = Number(m.groups!.y);
     ret.w = Number(m.groups!.w);
@@ -593,7 +644,7 @@ export class TabNode extends ControlWHNode {
   }
 
   getCCode(): string {
-    return `${this.container}.Addtab("${str(this.firstEmpty)}", "${str(this.font)}", "${str(this.align)}", ${this.n24}, ${this.n0}, ${num(this.x)}, ${num(this.y)}, ${num(this.w)}, ${num(this.h)}, ${this.picN}, ${this.layerN}, ${this.parentN});`;
+    return `${this.container}.Addtab("${str(this.label)}", "${str(this.font)}", "${str(this.align)}", ${num(this.labelW)}, ${num(this.labelH)}, ${num(this.x)}, ${num(this.y)}, ${num(this.w)}, ${num(this.h)}, ${this.picN}, ${this.layerN}, ${this.parentN});`;
   }
 }
 
@@ -1319,20 +1370,20 @@ export class SetMaxAnaOutPortNode extends TextNode {// int maxAnaOutport = mainf
 }
 
 export class SelectLayerNode extends ScreenControlNode { ////AS3.selectlayer(
-  text: string;
+  layerN: number;
   static parse(cCodeLine = ""){
     if (!cCodeLine) return null;
 
-    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.selectlayer\s*\(.*/)
+    var m = cCodeLine.match(/^(?<container>AS3|AS3jog)\.selectlayer\s*\(\s*(?<layerN>\d*)\s*\)\s*;.*/)
     if (!m) return null;
 
     var ret = new SelectLayerNode();
     ret.container = ScreenNameFromString(m.groups.container);
-    ret.text = m.input;
+    ret.layerN = Number(m.groups.layerN);
     return ret;    
   }
   getCCode(): string {
-    return this.text;
+    return `${this.container}.selectlayer(${num(this.layerN)});`
   }
 }
 

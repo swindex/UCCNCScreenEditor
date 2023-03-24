@@ -11,7 +11,7 @@ import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_con
 import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
-import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldtextNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode, ComboNode } from "../Parser";
+import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabNode,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldtextNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode, ComboNode, ScreenName, SelectLayerNode } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
 import { PictureListEditor } from "./PictureListEditor";
 import { FontsList } from "../Fonts";
@@ -27,7 +27,41 @@ import { ColorNumbers } from "../ColorNumbers";
 import { ComboNumbers } from "../ComboNumbers";
 import { Loader } from "leet-mvc/pages/Loader/Loader";
 
-
+const dataClean = {
+  controller: null,
+  controllType: null,
+  controllTypeName: null,
+  controllN: null,
+  buttonN: null,
+  ledN: null,
+  fieldN: null,
+  checkBoxN: null,
+  layerN: null,
+  parentN: null,
+  x: null,
+  y: null,
+  w: null,
+  h: null,
+  toggle: false,
+  blink: false,
+  picN: null,
+  pictureSRC_up: null,
+  pictureSRC_down: null,
+  font: null,
+  fontSize: null,
+  color:null,
+  colorName:null, //
+  color2:null,
+  colorName2:null, //
+  align: null,
+  vertical:null,
+  min: null,
+  max: null,
+  clickable: null,
+  transparency: null,
+  value: null,
+  fieldType: null,
+}
 export class LayoutPage extends HeaderPage {
   constructor(){
     super();
@@ -60,46 +94,16 @@ export class LayoutPage extends HeaderPage {
     this.shiftPressed = false;
     this.altPressed = false;
     this.visibleLayers = [1, 2];
-    this.dataClean = {
-      controller: null,
-      controllType: null,
-      controllTypeName: null,
-      controllN: null,
-      buttonN: null,
-      ledN: null,
-      fieldN: null,
-      checkBoxN: null,
-      layerN: null,
-      parentN: null,
-      x: null,
-      y: null,
-      w: null,
-      h: null,
-      toggle: false,
-      blink: false,
-      picN: null,
-      pictureSRC_up: null,
-      pictureSRC_down: null,
-      font: null,
-      fontSize: null,
-      color:null,
-      colorName:null, //
-      color2:null,
-      colorName2:null, //
-      align: null,
-      vertical:null,
-      min: null,
-      max: null,
-      clickable: null,
-      transparency: null,
-      value: null,
-      fieldType: null,
-    }
-    this.data = Objects.copy(this.dataClean);
+    
+    this.data = Objects.copy(dataClean);
 
     this.controlPropertiesForm = { type:"form", class:"box", displayRule:"true_if_not:controllType,null", items:[
       { type:"label", value:"Element Properties"},
       { type:"text", title:"Element Type", name:"controllTypeName", attributes:{disabled:true}},
+      { type:"select", name:"container", title:"Element Screen", placeholder:"", validateRule:"required", class:"", items: [
+        { value:"AS3", title: "Main Screen"},
+        { value:"AS3jog", title: "Jog Screen"},
+      ]},
       { type:"select", name:"fieldType", title:"Fild Type", placeholder:"", displayRule:`true_if:controllType,${FieldNode.name}`, validateRule:"required", class:"", items: Objects.copy(FieldTypes)},
 
       { type:"select", title:"List Number", name:"listN", displayRule:`true_if:controllType,${ListNode.name}`, items:[
@@ -113,12 +117,8 @@ export class LayoutPage extends HeaderPage {
       { type:"function-select", title:"Field Number", name:"fieldN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items: getButtonsDropDown(FieldNumbers), attributes:{showItemsOnFocus:true} },
       { type:"function-select", title:"Checkbox Number", name:"checkBoxN", validateRule:"required|numeric|min:0", displayRule:`true_if:controllType,${CheckboxNode.name}`, items: getButtonsDropDown(CheckBoxNumbers), attributes:{showItemsOnFocus:true} },
       { type:"number", title:"Parent Tab Layer Number", name:"parentN", displayRule:`true_if:controllType,${TabNode.name}`, validateRule:"required|numeric|min:0" },
-      { type:"number", title:"Layer Number", name:"layerN", validateRule:"numeric|min:0"},
-      { type:"select", name:"container", title:"Element Area", placeholder:"", displayRule:`true_if_not:controllType,${TabNode.name}`, validateRule:"required", class:"", items: [
-        { value:"AS3", title: "Main Area"},
-        { value:"AS3jog", title: "Jog Area"},
-      ]},
-      { type:"form", class:"row", items:[
+      { type:"number", title:"Layer Number", name:"layerN", displayRule:`true_if_not:controllType,${PictureNode.name}`, validateRule:"numeric|min:0"},
+      { type:"form", class:"row", displayRule:`true_if_not:controllType,${PictureNode.name}`, items:[
         { type:"number", name:"x", title:"X", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
         { type:"number", name:"y", title:"Y", placeholder:"", validateRule:"numeric", class:"col-6", unit:"px"},
         { type:"number", name:"w", title:"Width", placeholder:"", displayRule:`true_if_not:controllType,${LabelNode.name},${CheckboxNode.name}`, validateRule:"required|numeric|min:0", class:"col-6", unit:"px"},
@@ -144,7 +144,7 @@ export class LayoutPage extends HeaderPage {
         { type:"checkbox", name:"clickable", title:"Clickable", value: false, class:"col-6"},
       ]},
 
-      { type:"form", class:"row", displayRule:`true_if:controllType,${FieldNode.name},${ListNode.name},${TabNode.name},${CodeviewNode.name},${LabelNode.name}`, items:[
+      { type:"form", class:"row", displayRule:`true_if:controllType,${FieldNode.name},${ListNode.name},${CodeviewNode.name},${LabelNode.name}`, items:[
         { type:"select", name:"font", title:"Font Name", placeholder:"", validateRule:"required", class:"col-6", items: Objects.copy(FontsList)},
         { type:"number", name:"fontSize", title:"Font Size", placeholder:"", validateRule:"required|numeric|min:1", class:"col-6", unit:"px"},
       ]}, 
@@ -158,7 +158,7 @@ export class LayoutPage extends HeaderPage {
 
       { type:"number", name:"transparency", title:"Opacity", placeholder:"", displayRule:`true_if:controllType,${ListNode.name},${FillNode.name}`, validateRule:"required|numeric|min:0|max:1", unit:""},
       
-      { type:"select", name:"align", title:"Text Align", placeholder:"", displayRule:"true_if:controllType,"+FieldNode.name+","+ListNode.name+","+TabNode.name+","+LabelNode.name+"", validateRule:"required", items:[
+      { type:"select", name:"align", title:"Text Align", placeholder:"", displayRule:"true_if:controllType,"+FieldNode.name+","+ListNode.name+","+LabelNode.name+"", validateRule:"required", items:[
         { value:"left", title: "Left"},
         { value:"center", title: "Center"},
         { value:"right", title: "Right"},
@@ -256,8 +256,10 @@ export class LayoutPage extends HeaderPage {
   }
 
   clearAll(){
-    Objects.overwrite(this.data, this.dataClean);
-    this.form.fields['controller'].items = [];
+    let controller = this.data.controller;
+    Objects.overwrite(this.data, dataClean);
+    this.data.controller = controller;
+    //this.form.fields['controller'].items = [];
 
     if (this.mainArea.children[0])
       this.mainArea.children[0].remove();
@@ -697,6 +699,7 @@ export class LayoutPage extends HeaderPage {
       { type:"form", name:"common", class:"row", items:[
         { type:"checkbox", name:"resize", title:"Resize Child Elements", placeholder:"", class:"col-6"},
       ]},
+      { type:"text", name:"tabSelectOrder", title:"Tab Layer Select Order (comma-separated numbers)", placeholder:"", validateRule:"required"},
     ];
     p.render();
 
@@ -705,6 +708,36 @@ export class LayoutPage extends HeaderPage {
       if (!p.validate()) {
         return false;
       }
+      if (!String(p.data.tabSelectOrder).match(/^[0-9]+(\,[0-9]+)*$/)) {
+        p.errors["tabSelectOrder"] = "The Tab Layer Select Order list is in incorrect format."
+        return false;
+      }
+      /*check if layerselect is valid!*/ 
+      let layernaumbers = String(p.data.tabSelectOrder).split(",").map(el=>Number(el));
+      let repeating = layernaumbers.filter((item, index) => layernaumbers.indexOf(item) !== index)
+      if (repeating.length>0) {
+        p.errors["tabSelectOrder"] = "The Layer Numbers '"+repeating.join(",")+"' appear more than once in the Tab Layer Select Order list."
+        return false;
+      }
+      let tabNodes = this.parser.getNodesWhere(this.data.controller, ScreenName.AS3, TabNode);
+      let noLayers = layernaumbers.filter(el=>!tabNodes.find(el1=>el == el1.layerN));
+      if (noLayers.length > 0) {
+        p.errors["tabSelectOrder"] = "The Layer Number '"+noLayers.join(",")+"' does not exist in this Screen"
+        return false;
+      }
+
+      //remove all old selects:
+      let oldSelects = this.parser.getNodesWhere(this.data.controller, ScreenName.AS3, SelectLayerNode);
+      NodeOperations.removeNodes(oldSelects,this.parser);
+      //recreate selects according to the new list:
+      layernaumbers.forEach(ln=>{
+        let sln = new SelectLayerNode();
+        sln.region = this.data.controller
+        sln.container = ScreenName.AS3
+        sln.layerN = ln;
+        this.parser.insertNewNode(sln)
+      })
+      //end
       
       if (p.data.common.resize) {
         var xf = p.data.main.w / main.w
@@ -764,7 +797,8 @@ export class LayoutPage extends HeaderPage {
       },
       common:{
         resize: true
-      }
+      },
+      tabSelectOrder: this.parser.getNodesWhere(this.data.controller, ScreenName.AS3, SelectLayerNode).map(el=>el.layerN).join(',')
 
     })
 
@@ -812,7 +846,7 @@ export class LayoutPage extends HeaderPage {
 
     p.addLabel(null, "Select the Controllers to apply the changes to:")
 
-    let controllers = this.parser.getControllers();
+    let controllers = this.parser.getRegions();
     controllers.forEach(controller=>{
         if (controller != this.data.controller){
           p.addCheck(controller, controller)
@@ -836,6 +870,50 @@ export class LayoutPage extends HeaderPage {
       
     })
     
+  }
+
+  onCopySelectedControlsClicked(){
+    var p = Dialog("Copy Elements");
+    p.addLabel(null, "This dialog allows you to copy the selected elements into another controller.")
+
+    p.addLabel(null,"Select the Controllers where you want to copy the " + this.selectedNodes.length + " selected elements:")
+
+    let controllers = this.parser.getRegions();
+    controllers.forEach(controller=>{
+        if (controller != this.data.controller && controller != "SCREENPROPERTIES"){
+          p.addCheck(controller, controller)
+        }
+    })
+
+    if (this.selectedNodes.find(el=>el instanceof TabNode)) {
+      p.addCheck("recursive", "Recursively copy contents of TabNodes");
+    }
+
+
+    p.addActionButton("Cancel", null);
+
+    let orig_regions = this.parser.getRegions();
+
+    p.addActionButton("Copy", ()=>{
+
+      let regions = orig_regions.filter(el=>{
+        return p.data[el]
+      })
+
+      if (regions.length==0) {
+        return false;
+      }
+      try {
+        regions.forEach(region=>{
+          NodeOperations.copyNodeToOtherRegions(this.selectedNodes, region, this.parser, p.data.recursive)
+        })
+      } catch (err){
+        Alert(err.message, null, "Something Wrong!")
+      }
+      this.selectedNodes = [];
+      this.reRender();
+      this.saveHistorySnapshot();
+    })
   }
 
   get isSelectedElementPictureGenSupported(){
@@ -867,7 +945,7 @@ export class LayoutPage extends HeaderPage {
     this.validateCurrentController();
   }
 
-  onUndoClicked(){
+  async onUndoClicked(){
     if (this.history.length > 1) {
       this.historyReverting = true;
       this.selectedNodes = [];
@@ -876,9 +954,13 @@ export class LayoutPage extends HeaderPage {
       //get previous state
       var snap = this.history[this.history.length-1]
       var controller = this.data.controller;
-      this.parse(snap, true);
+      await this.parse(snap, true);
       this.data.controller = controller;
       this.historyReverting = false;
+
+      setTimeout(() => {
+        this.data.controller = controller;
+      }, 50);
     }
   }
 
@@ -886,26 +968,28 @@ export class LayoutPage extends HeaderPage {
     ConfirmButtons(`When prompted, please do the following:\n
 Select the Screenset file: C:/UCCNC/Screens/ScreenSetName.ssf\n
 Select the Flashscreen directory with all screenset image files such as: C:/UCCNC/Flashscreen/\n
-Please make sure to accept all file and directory acess permissions shown by the browser!`, "Please Read!", { Cancel: null, OK: async ()=>{
-      try {
-        var [fileHandle] = await window.showOpenFilePicker();
-        //if (await this.verifyPermission(this.fileHandle, true)) {
-          var dirHandle = await window.showDirectoryPicker();
-          if (dirHandle) {
-            this.fileHandle = fileHandle;
-            this.dirHandle = dirHandle;
-            var file = await this.fileHandle.getFile();
-            var text = await file.text();
-            
-            this.history = [];
-            this.parse(text, false);
-
-
-          }
-        //}
-      } catch (ex) {
-        Alert(ex.message,null,"Error loading screenset!");
-      }
+Please make sure to accept all file and directory acess permissions shown by the browser!`, "Please Read!", { Cancel: null, OK: (dialog)=>{
+      (async ()=> {
+        try {
+          var [fileHandle] = await window.showOpenFilePicker();
+          //if (await this.verifyPermission(this.fileHandle, true)) {
+            var dirHandle = await window.showDirectoryPicker();
+            if (dirHandle) {
+              this.fileHandle = fileHandle;
+              this.dirHandle = dirHandle;
+              var file = await this.fileHandle.getFile();
+              var text = await file.text();
+              
+              this.history = [];
+              await this.parse(text, false);
+              dialog.destroy();
+            }
+          //}
+        } catch (ex) {
+          Alert(ex.message, null, "Error loading screenset!");
+        }
+      })()
+      return false;
     }})
     
   }
@@ -921,9 +1005,9 @@ Please make sure to accept all file and directory acess permissions shown by the
     if (ss==2)
       file="Default2019.ssf";
 
-    FetchFile(file).then(text=>{
+    FetchFile(file).then(async (text)=>{
       this.history = [];
-      this.parse(text, false);
+      await this.parse(text, false);
     })
 
     Alert("File operations are not allowed for the Sample screensets loaded from the web site!\nPlease load a screenset from your computer in order to be able to save changes, add pictures, etc.",null,"Warning");
@@ -950,7 +1034,7 @@ Please make sure to accept all file and directory acess permissions shown by the
     })
 
     
-    this.parse(this.LastSession, this.pendingSave);
+    await this.parse(this.LastSession, this.pendingSave);
   }
 
   async onSaveAsScreensetClicked(){
@@ -1000,18 +1084,25 @@ Please make sure to accept all file and directory acess permissions shown by the
   async onSaveScreensetClicked(){
     if (!this.isFileOpsAllowed()) return;
 
-    let loader = Loader().show("Saving the Screenset!")
-
     await FileHelpers.verifyPermission(this.fileHandle, true)
 
-    if (await FileHelpers.writeTextToFileHandle(this.parser.getCCode(true), this.fileHandle)){
-      this.pendingSave = false;
-    } else {
-      Alert("Wasn't able to save the screenset!\nPlease try again or use the 'Save As' option.", null, "Save Error");
-    }
-    loader.hide();
-    
-    
+    let loader = Loader().show("Saving Screenset...")
+    setTimeout(async() => {
+      try {
+       
+        if (await FileHelpers.writeTextToFileHandle(this.parser.getCCode(true), this.fileHandle)){
+          this.pendingSave = false;
+        } else {
+          Alert("Wasn't able to save the screenset!\nPlease try again or use the 'Save As' option.", null, "Save Error");
+        }
+        this.reRender();
+        this.saveHistorySnapshot();
+      } catch (error) {
+        Alert(error.message, null, "Save Error");
+      }
+      loader.hide();      
+    }, 100);
+   
   }
 
   verifyPermission(fileHandle, readWrite) {
@@ -1144,7 +1235,7 @@ Please make sure to accept all file and directory acess permissions shown by the
   selectNode(node, multiple = false){
 
     if (node instanceof PictureNode) {
-      this.onEditPictureListClicked().then(p=>{
+      /*this.onEditPictureListClicked().then(p=>{
         Objects.forEach(p.gallery.items, (item, i)=>{
           if (item.picture==node) {
             p.gallery.setSelectedIndex(i);
@@ -1152,7 +1243,18 @@ Please make sure to accept all file and directory acess permissions shown by the
           }
         });
 
-      });
+      });*/
+      if (this.selectedNodes.find(el=>el == node)) {
+        this.selectedNodes = this.selectedNodes.filter(el=>el != node);
+      } else {
+        if (multiple) {
+          this.selectedNodes.push(node)
+        } else {
+          this.selectedNodes = [node]
+        }
+      }
+      this.controlTree.setSelectedNodes(this.selectedNodes);
+      this.editSelectedNodes();
     } else {
       if (node.el == null) {
         //node is not yet rendered!
@@ -1221,6 +1323,15 @@ Please make sure to accept all file and directory acess permissions shown by the
 
   onTreeControlSelected(node){
     this.selectNode(node, this.ctrlPressed)
+  }
+  /**
+   * 
+   * @param {MouseEvent} event 
+   * @param {CNode} node 
+   */
+  onTreeControlMouseOver(event, node){
+    if (this.ctrlPressed && event.buttons == 1)
+      this.selectNode(node, this.ctrlPressed)
   }
 
   /**
@@ -1354,9 +1465,10 @@ Please make sure to accept all file and directory acess permissions shown by the
   }
 
   editSelectedNodes(){
-    this.dataClean.controller = this.data.controller;
+    let controller = this.data.controller;
     //clean all data
-    Objects.overwrite(this.data, this.dataClean);
+    Objects.overwrite(this.data, dataClean);
+    this.data.controller = controller;
 
     if (this.selectedNodes.length > 0){
        this.getCurrentPictureList().then(items=>{
@@ -1451,12 +1563,12 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
 
       if (node instanceof TabNode) {
-        this.data.font = node.font
+        //this.data.font = node.font
         //this.data.fontSize = node.fontSize;
         //this.data.color = argbToRGB(node.color);
         //this.data.colorName = this.data.color;
         this.data.parentN = node.parentN
-        this.data.align = node.align;
+        //this.data.align = node.align;
         this.data.picN = node.picN
         this.data.pictureSRC_up = node.picture.picture_up;
         this.data.pictureSRC_down = node.picture.picture_down;
@@ -1612,8 +1724,8 @@ Please make sure to accept all file and directory acess permissions shown by the
       }
 
       if (node instanceof TabNode) {
-        node.font = this.data.font;
-        node.align = this.data.align;
+        //node.font = this.data.font;
+        //node.align = this.data.align;
         node.picN = this.data.picN;
         node.parentN = this.data.parentN;
       }
@@ -1677,33 +1789,36 @@ Please make sure to accept all file and directory acess permissions shown by the
     }
   }
   
-  parse(text, pendingSave = false){
-    this.clearAll()
-    
-    let loader = Loader().show("Loading screenset...")
-    setTimeout(() => {
-      try {
-        this.parser = new Parser()
-        this.parser.parse(text);
-    
-        this.settings = Objects.find(this.parser.getNodes(), node=> node instanceof UCCNCEditorSettings);
-    
-        //this.renderControls(this.parser.getNodes());
-        this.form.fields['controller'].items = this.getControllerItems()
-        this.data.controller = this.form.fields['controller'].items[0].value;
-        setTimeout(() => {
+  async parse(text, pendingSave = false){
+    return new Promise((resolve,reject) => {
+      this.clearAll()
+      
+      let loader = Loader().show("Loading screenset...")
+      setTimeout(() => {
+        try {
+          this.parser = new Parser()
+          this.parser.parse(text);
+      
+          this.settings = Objects.find(this.parser.getNodes(), node=> node instanceof UCCNCEditorSettings);
+      
+          //this.renderControls(this.parser.getNodes());
+          this.form.fields['controller'].items = this.getControllerItems()
+          if (!this.data.controller)
+            this.data.controller = this.form.fields['controller'].items[0].value;
+          //setTimeout(() => {
           this.form.onChange();
           this.saveHistorySnapshot()
           this.pendingSave = pendingSave;
-        }, 100);
-          
-      } catch (error) {
-        
-      } finally {
-        loader.hide();
-      }  
-    }, 50);
-    
+          resolve(true)
+          //}, 100);
+            
+        } catch (error) {
+          reject(error)
+        } finally {
+          loader.hide();
+        }  
+      }, 0);
+    })  
   
   }
 
@@ -1997,9 +2112,9 @@ Please make sure to accept all file and directory acess permissions shown by the
   }
 
   getControllerItems(){
-    return Objects.map(this.parser.getControllers(), el=>{
+    return Objects.map(this.parser.getRegions(), el=>{
       return {value: el, title:el};
-    });
+    }).filter(el=>el.value!="SCREENPROPERTIES");
   }
 
   onShowEmailClicked(){
@@ -2082,7 +2197,7 @@ var template = `
   <div class="right panel tree-container">
     <div class="panel-head" style="display:flex;">Element Tree<i class="fas fa-search-location" style="margin-left: auto;"></i></div>
     <div class="panel-body scroll">
-      <div [component]="this.controlTree"  [onControlSelected]="this.onTreeControlSelected"></div>
+      <div [component]="this.controlTree"  [onControlSelected]="this.onTreeControlSelected" [onControlMouseOver]="this.onTreeControlMouseOver"></div>
     </div>
   </div>
   <div class="right">
@@ -2095,12 +2210,12 @@ var template = `
     </div>
     <div class="buttons mb-1">
       <button type="button" class="" [disabled]="this.history.length <= 1" title="Undo" onclick="this.onUndoClicked()"><i class="fas fa-undo"></i></button>
-      <button type="button" [if]="this.selectedNodes.length > 0" class="" title="Duplicate Selected Controls" onclick="this.onDuplicateControlClicked()"><i class="fas fa-copy"></i></button>
+      <button type="button" [if]="this.selectedNodes.length > 0  " class="" title="Duplicate Selected Elements" onclick="this.onDuplicateControlClicked()">2X</button>
       <button type="button" [if]="this.data.controller" class="" title="Create Element" onclick="this.onCreateControlClicked()"><i class="fas fa-plus-square"></i></button>
-      <button type="button" [if]="this.selectedNodes.length > 0" class="danger" title="Delete Selected Controls" onclick="this.onDeleteControlsClicked()"><i class="fas fa-trash-alt"></i></button>
+      <button type="button" [if]="this.selectedNodes.length > 0" class="danger" title="Delete Selected Elements" onclick="this.onDeleteControlsClicked()"><i class="fas fa-trash-alt"></i></button>
       <button type="button" [if]="this.isSelectedElementPictureGenSupported" class="" title="Generate Button Picture" onclick="this.onGenerateButtonClicked()"><i class="fas fa-file-image"></i></button>
-      <button type="button" [if]="this.selectedNodes.length > 0" class="" title="Apply the selected Controls' style on other Controllers" onclick="this.onApplyNodesStyleOnOtherControllersClicked()"><i class="fas fa-project-diagram"></i></button>
- 
+      <button type="button" [if]="this.selectedNodes.length > 0" class="" title="Apply the selected Elements style on other Controllers" onclick="this.onApplyNodesStyleOnOtherControllersClicked()"><i class="fas fa-project-diagram"></i></button>
+      <button type="button" [if]="this.selectedNodes.length > 0" class="" title="Copy Selected Elements to other Controllers" onclick="this.onCopySelectedControlsClicked()"><i class="fas fa-copy"></i></button>
     </div>
     <div class="buttons mb-1">
       
