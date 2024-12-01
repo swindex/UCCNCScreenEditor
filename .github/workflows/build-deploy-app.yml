@@ -1,0 +1,44 @@
+name: Build and deploy App to Droplet
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: |
+        cd app
+        npm install
+
+    - name: Build the project
+      run: |
+        cd app
+        npm run build
+
+    - name: Deploy to DigitalOcean Droplet
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        DROPLET_IP: ${{ secrets.DROPLET_IP }}
+      run: |
+        echo "$SSH_PRIVATE_KEY" > /tmp/private_key
+        chmod 600 /tmp/private_key
+        rsync -avz -e "ssh -i /tmp/private_key -o StrictHostKeyChecking=no" app/www/ root@$DROPLET_IP:/var/www/snapwebapps.com/uccnceditor/
+        ssh -i /tmp/private_key -o StrictHostKeyChecking=no root@$DROPLET_IP "sudo systemctl reload nginx"

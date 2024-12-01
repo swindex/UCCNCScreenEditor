@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "serve": "webpack serve",
-    "build": "webpack --env=production",
-    "build-deploy": "webpack --env=production && node ./utils/deploy_web",
-    "deploy": "node ./utils/deploy_web"
+    "build": "webpack --env=production"
   },
   "author": "",
   "license": "ISC",
