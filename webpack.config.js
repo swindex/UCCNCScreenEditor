@@ -1,4 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin'); //installed via npm
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const baseConf = require('leet-mvc/webpack.base.config');
 const {merge} = require('webpack-merge');
@@ -16,6 +17,13 @@ module.exports = (env) => {
   plugins.push(new webpack.DefinePlugin({
     'process.env.NODE_ENV': JSON.stringify('development')
   }))
+  plugins.push(
+    new CopyWebpackPlugin({
+      patterns:[
+        { from: 'static/UCCNC', to: 'UCCNC' }
+      ]
+    })
+  );
 
   const conf = {
     plugins,
