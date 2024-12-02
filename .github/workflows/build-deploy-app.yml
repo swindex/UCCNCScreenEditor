@@ -38,5 +38,6 @@ jobs:
       run: |
         echo "$SSH_PRIVATE_KEY" > /tmp/private_key
         chmod 600 /tmp/private_key
+        ssh -i /tmp/private_key -o StrictHostKeyChecking=no root@$DROPLET_IP "mkdir -p /var/www/snapwebapps.com/uccnceditor"
         rsync -avz -e "ssh -i /tmp/private_key -o StrictHostKeyChecking=no" www/ root@$DROPLET_IP:/var/www/snapwebapps.com/uccnceditor/
         ssh -i /tmp/private_key -o StrictHostKeyChecking=no root@$DROPLET_IP "sudo systemctl reload nginx"
