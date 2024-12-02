@@ -25,12 +25,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd app
         npm install
 
     - name: Build the project
       run: |
-        cd app
         npm run build
 
     - name: Deploy to DigitalOcean Droplet
@@ -40,5 +38,5 @@ jobs:
       run: |
         echo "$SSH_PRIVATE_KEY" > /tmp/private_key
         chmod 600 /tmp/private_key
-        rsync -avz -e "ssh -i /tmp/private_key -o StrictHostKeyChecking=no" app/www/ root@$DROPLET_IP:/var/www/snapwebapps.com/uccnceditor/
+        rsync -avz -e "ssh -i /tmp/private_key -o StrictHostKeyChecking=no" www/ root@$DROPLET_IP:/var/www/snapwebapps.com/uccnceditor/
         ssh -i /tmp/private_key -o StrictHostKeyChecking=no root@$DROPLET_IP "sudo systemctl reload nginx"
