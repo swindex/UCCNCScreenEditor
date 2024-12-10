@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "serve": "npx webpack serve",
+    "serve-prod": "npx webpack serve --env=production",
     "build": "npx webpack --env=production"
   },
   "author": "",

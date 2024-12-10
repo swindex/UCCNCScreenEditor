@@ -11,7 +11,7 @@ export class FunctionSelectorPage extends DialogPage {
     this.items = [];
     this.filteredItems = [];
     this.searchText = null;
-    this.content = ""
+    this.content = template
     this.buttons = {
       Close: null,
       Select: ()=>{
@@ -59,10 +59,6 @@ export class FunctionSelectorPage extends DialogPage {
       if (el)
         el.scrollIntoView();
     },100)
-  }
-
-  get template (){
-    return this.extendTemplate(super.template, template)
   }
 }
 
