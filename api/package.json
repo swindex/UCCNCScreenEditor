@@ -1,0 +1,31 @@
+{
+  "name": "UCCNCN_API",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "serve-development": "cross-env NODE_ENV=development node app.js",
+    "serve-test": "cross-env NODE_ENV=test node app.js",
+    "docker-compose":"docker-compose up",
+    "test": "jest --detectOpenHandles"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "mysql2": "^3.11.4"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.7",
+    "sqlite3": "^5.1.7",
+    "supertest": "^7.0.0"
+  }
+}

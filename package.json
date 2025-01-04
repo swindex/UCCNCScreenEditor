@@ -1,38 +1,28 @@
 {
-  "name": "uccncscreeneditor",
+  "name": "d424-software-engineering-capstone",
   "version": "1.0.0",
-  "description": "",
+  "description": "<strong>**DO NOT DISTRIBUTE OR PUBLICLY POST SOLUTIONS TO THESE LABS. MAKE ALL FORKS OF THIS REPOSITORY WITH SOLUTION CODE PRIVATE. PLEASE REFER TO THE STUDENT CODE OF CONDUCT AND ETHICAL EXPECTATIONS FOR COLLEGE OF INFORMATION TECHNOLOGY STUDENTS FOR SPECIFICS. **</strong>",
   "main": "index.js",
   "scripts": {
-    "serve": "npx webpack serve",
-    "serve-prod": "npx webpack serve --env=production",
-    "build": "npx webpack --env=production"
+    "test:api": "cd api && npm run test",
+    "serve:test:api": "cd api && npm run serve-test",
+    "serve:test:ui": "cd ui && npm run serve-test",
+    "test:ui": "concurrently \"npm run serve:test:api\" \"npm run serve:test:ui\" \"cypress run\"",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "install:all": "npm install && cd api && npm install && cd ../ui && npm install"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/wgu-gitlab-environment/student-repos/egerfan/d424-software-engineering-capstone.git"
+  },
+  "author": "Eldar Gerfanov",
   "license": "ISC",
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^6.1.1",
-    "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@types/wicg-file-system-access": "^2020.9.1",
-    "bootstrap-4-grid": "^3.4.0",
-    "core-js": "^3.8.3",
-    "idb-keyval": "^6.2.1",
-    "leet-mvc": "github:swindex/leet-mvc"
-  },
-  "browser": {
-    "buffer": false
+    "cross-env": "^7.0.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/preset-env": "^7.12.16",
-    "@babel/preset-typescript": "^7.13.0",
-    "autoprefixer": "^10.2.4",
-    "babel-loader": "^8.2.2",
-    "babel-plugin-transform-imports": "^2.0.0",
-    "babel-preset-es2015": "^6.24.1",
-    "buffer": "^6.0.3",
-    "copy-webpack-plugin": "^12.0.1",
-    "ftp-deploy": "^2.4.1",
-    "progress-bar-webpack-plugin": "^2.1.0"
+    "concurrently": "^9.1.0",
+    "cypress": "^13.16.0"
   }
 }

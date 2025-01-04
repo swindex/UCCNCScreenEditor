@@ -1,4 +1,4 @@
 node_modules
-www/*
+ui/www/
 utils/secret.js
 .vscode/tasks.json

@@ -1,0 +1,108 @@
+#page-UserReportPage {
+  .content {
+    display: flex;
+    flex-direction: column;
+  }
+  .searchblock {
+    box-shadow: 0 0 6px 0px #989898;
+    margin-bottom: 10px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    .fieldgroup {
+      margin-bottom: 0;
+      border: 1px solid #c1c1c1;
+      border-radius: 5px;
+      height: 100%;
+    }
+    input{
+      padding: 10px;
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .buttons {
+      height: 100%;
+    
+      button {
+        height: 100%;
+        margin-right: 5px;
+      }
+    }
+  }
+  .list{
+    //height: 500px;
+    overflow-y: scroll;
+    position: relative;
+    //padding-top: 40px;
+    flex-grow: 1;
+  }
+  .item{
+    display: flex;
+    padding: 5px;
+    border-bottom: 1px solid #dedede;  
+    >div {
+      overflow-wrap: anywhere;
+      padding: 5px;
+      border-right: 1px solid #dedede;
+      &:last-child{
+        border-right: none;
+      }
+    }
+
+    .column {
+      flex: 4;
+
+      &.role {
+        max-width: 5em;
+      }
+      &.date {
+        max-width: 12em;
+      }
+    }
+
+
+
+    &[selected] {
+      background-color: #607d8b;
+    }
+
+    &.header {
+      //position: absolute;
+      //top: 0;
+      //width: 100%;
+      font-weight: bold;
+    }
+  }
+  
+}
+@media print {
+  html {
+    overflow: auto !important;
+  }
+
+  body {
+    overflow: unset;
+    height: auto !important;
+  }
+
+  [page] {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .searchblock,
+  #backButton
+  {
+    display:none !important;
+  }
+
+  .content {
+    display: block;
+    overflow: unset;
+    height: auto !important;
+  }
+  
+  .list {
+    overflow: unset !important;
+  }
+}

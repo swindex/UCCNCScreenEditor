@@ -1,0 +1,280 @@
+#page-LayoutPage {
+  .welcome {
+    display: flex;
+    height: 100%;
+    .welcome-box{
+      margin: auto;
+      background-color: #f8f9fa;
+      padding: 25px;
+      box-shadow: 0 0 15px #0000008a;
+      border-radius: 15px;
+      font-size: 1.15em;
+      .btn-xl {
+        width: 100%;
+      }
+    }
+  }
+  .wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    margin: 0px;
+    padding: 0px;
+    .error {
+      pre {
+        color:red;
+        white-space: break-spaces;
+      }
+    }
+    .middle {
+      position: relative;
+      flex: 1;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .right {
+      padding: 10px;
+      height: 100%;
+      overflow-y: auto;
+      max-width: 250px;
+      //box-shadow: inset 1px 1px 9px 0px black;
+
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        button {
+          &:first-child {
+            border: none;  
+          }
+          background-color: #dae0e5;
+          border-radius: 0;
+          color: #007bff;
+          border: none;
+          border-left: 1px solid #a5a5a5;
+          font-size: 1em;
+          min-width: 2.0em;
+          height: 2em;
+          &.danger {
+            color: red;
+          }
+          &:active {
+            background-color: #007bff;
+            color:white;
+          }
+          &[disabled] {
+            color: gray !important;
+          }
+        }
+      }
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      .panel-head {
+        font-weight: bold;
+        padding: 5px;
+        background-color: #e7e7e7;
+      }
+      .panel-body {
+        flex: 1;
+        padding-left: 5px;
+      }
+    }
+    .left {
+
+    }
+    .properties-wrapper{
+      position: relative;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .properties {
+     
+      overflow-y: auto;
+      
+    }
+    .box {
+      border: 1px solid #d8d8d8;
+      padding: 10px;
+      margin-top: 15px;
+    }
+  }
+  .help-baloon {
+    padding: 15px;
+    max-width: 350px;
+    background-color: beige;
+    border-radius: 10px;
+    margin: 5px 0;
+  }
+  .error-baloon {
+    background-color: #dc3545;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    .error-title {
+      margin-right: 6px;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .clickable {
+      cursor: pointer;
+    }
+    b {
+      
+    }
+  }
+  #workarea {
+    overflow:scroll;
+    width: 100%;
+    height: 100%;
+    position: relative;
+
+    .selectbox{
+      z-index: 9999999;
+      border: 1px dashed red;
+      position: absolute;
+    }
+
+    #mainarea{
+    
+    } 
+    #jogarea {
+      position: absolute;
+      top:0;
+      bottom:0;
+    }
+    .UC-screen{
+      position: relative;
+      z-index: 1;
+      .UC-control {
+        user-select: none;
+        z-index: 3;
+        position: absolute;
+        //border:1px solid gray;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        white-space: nowrap;
+
+        &.selected {
+          //border: 2px dashed red !important;
+          outline: 2px dashed red;
+        }
+
+        &.blink {
+          animation: blinker 1s step-end infinite;
+        }
+      }
+      .SetScreenSizeNode {
+        border-bottom: 2px dashed #00000040;
+        border-right: 2px dashed #00000040;
+        z-index: 200 !important;
+        pointer-events: none;
+      }
+      .BackgroundNode{
+        z-index:1
+      }
+      .AS3jog {
+        z-index: 100;
+      }
+      .UCCAMNode, .ToolpathNode{
+        background-color: black;
+      }
+      .TabLayer {
+        z-index: 2;
+      }
+      .FillNode {
+        z-index: 0;
+        &.selected {
+          z-index: 10;
+        }
+      }
+      .FieldNode{
+        padding: .22em 0.5em;
+        &.updown{
+          height: 20px;
+          padding: 0;
+          background-color: white;
+          border: 2px inset #8080809e
+        }
+        &.field, &.showfield {
+          //height: 20px;
+          padding: 0;
+          background-color: white;
+          border: 2px inset #8080809e
+        }
+      }
+      .ColorNode {
+        background-color: yellow;
+        border: 1px inset gray;
+      }
+      .SliderNode {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .SliderNodeSlider {
+          width: 5px;
+          height: 15px;
+          position: absolute;
+          pointer-events: none;
+        }
+        .SliderNodeLine {
+          width: 100%;
+          height: 5px;
+          pointer-events: none;
+        }
+
+        &.vertical {
+          .SliderNodeLine{
+            width: 5px;
+            height: 100%;
+          }
+          .SliderNodeSlider {
+            width: 100%;
+            height: 5px;
+          }
+        }
+      }
+      .CheckboxNode {
+        width: 1.25em;
+        height: 1.25em;
+        border: 2px inset gray;
+        border-radius: 3px;
+      }
+      
+      .ComboNode{
+        background-color: #e2e2e2;
+        border: 2px outset #bbbbbb;
+      }
+      .ListNode{
+        z-index: 2;
+      }
+      .LabelNode{
+
+      }
+      .ButtonNode {
+        &:active {
+          //Do something. We need to load image_down if we want to show the pressed button image
+        }
+      }
+
+    }
+    .UC-background{
+      position: absolute;
+    }
+
+  }
+
+}
+
+@keyframes blinker {
+  50% {
+    background-position: 100%;
+  }
+}

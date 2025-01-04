@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"outDir": "./www",
+		"baseUrl": ".",
+		"checkJs": true,
+		"module": "commonjs",
+		"target": "ES2018",
+		"allowSyntheticDefaultImports": true,
+		"paths": {
+			"config":["./src/configs/config"],
+		}
+	},
+
+	"include": [
+		"src/**/*",
+    	"typings/**/*",
+    	"node_modules/leet-mvc/**/*"
+	],
+	"exclude": [
+		"www"
+	],
+	
+}

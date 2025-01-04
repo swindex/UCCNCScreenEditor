@@ -1,0 +1,15 @@
+services:
+  uccnc-node-app:
+    image: node:20
+    container_name: uccnc-node-app
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    command: >
+      sh -c "npm install && \
+        npx knex migrate:latest && \
+        npx knex seed:run && \
+        node app.js
+      "  # Install dependencies, migrate and then start the app

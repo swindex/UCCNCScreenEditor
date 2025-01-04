@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "target": "es6",                      // Set ECMAScript target version
+      "module": "commonjs",                 // Use CommonJS modules (standard for Node.js)
+      "baseUrl": "./",                      // Set the base directory for the project
+      "paths": {
+        "*": ["node_modules/*"],            // Resolve all modules from node_modules by default
+        "@middleware/*": ["middleware/*"],  // Aliases for paths (example)
+        "@routes/*": ["routes/*"],          // Alias for routes directory
+      }
+    },
+    "include": ["**/*.js"],                 // Include all JavaScript files in the project
+    "exclude": ["node_modules", "dist"]     // Exclude unnecessary directories
+  }
+  

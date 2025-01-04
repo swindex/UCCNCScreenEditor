@@ -1,0 +1,42 @@
+#page-FunctionSelectorPage {
+  .searchblock {
+    box-shadow: 0 0 6px 0px #989898;
+    margin-bottom: 10px;
+    input{
+      padding: 10px;
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+  }
+  .list{
+    height: 500px;
+    overflow-y: scroll;
+  }
+  .item{
+    display: flex;
+    padding: 5px;
+    border-bottom: 1px solid #dedede;  
+    margin: 0 2px;
+    >div {
+      overflow-wrap: anywhere;
+      padding: 5px;
+      border-right: 1px solid #dedede;
+      &:last-child{
+        border-right: none;
+      }
+    }
+
+    .value {
+      flex: 2;
+    }
+    .title {
+      flex: 4;
+    }
+    .text {
+      flex: 8;
+    }
+    &[selected] {
+      background-color: #607d8b;
+    }
+  }
+}
