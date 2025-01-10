@@ -31,6 +31,8 @@ export class FileSystemFilePicker extends DialogPage {
     this.dirHandle = dirHandle;
 
     this.isDirectory = isDirectory
+
+    this.content = template;
  
     this.buttons = {
       Close: ()=>{
@@ -155,9 +157,9 @@ export class FileSystemFilePicker extends DialogPage {
     }
   }
 
-  get template(){
+  /*get template(){
     return this.extendTemplate(super.template, template);
-  }
+  }*/
 
   isSelectedItem(item){
     if (this.selectedFileItem && item?.handle == this.selectedFileItem?.handle) {
