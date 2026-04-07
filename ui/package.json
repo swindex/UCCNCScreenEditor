@@ -18,7 +18,7 @@
     "bootstrap-4-grid": "^3.4.0",
     "core-js": "^3.8.3",
     "idb-keyval": "^6.2.1",
-    "leet-mvc": "github:swindex/leet-mvc"
+    "leet-mvc": "github:swindex/leet-mvc@v3.1.1"
   },
   "browser": {
     "buffer": false
