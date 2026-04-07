@@ -1,0 +1,38 @@
+name: PR UI build
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install UI dependencies
+        run: |
+          cd ui
+          npm install
+
+      - name: Run UI tests
+        run: npm run test:ui
+
+      - name: Build the project
+        run: |
+          cd ui
+          npm run build
