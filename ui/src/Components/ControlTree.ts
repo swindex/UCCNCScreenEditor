@@ -2,8 +2,6 @@ import { BackgroundNode, ButtonNode, CheckboxNode, CNode, ComboNode, ControlNode
 
 import { BaseComponent } from "leet-mvc/components/BaseComponent";
 
-import { Objects } from "leet-mvc/core/Objects";
-
 import "./ControlTree.scss";
 import { DOM } from "leet-mvc/core/DOM";
 import { ButtonNumbers } from "../ButtonNumbers";
@@ -11,12 +9,13 @@ import { FieldNumbers } from "../FieldNumbers";
 import { LedNumbers } from "../LedNumbers";
 import { ComboNumbers } from "../ComboNumbers";
 import { CheckBoxNumbers } from "../CheckBoxNumbers";
+import { getControlNumbersDict } from "../ControlNumberUtils";
 
-let buttonsDict = Objects.keyBy(ButtonNumbers, "value");
-let fieldsDict = Objects.keyBy(FieldNumbers, "value");
-let ledsDict = Objects.keyBy(LedNumbers, "value");
-let combosDict = Objects.keyBy(ComboNumbers, "value");
-let checksDict = Objects.keyBy(CheckBoxNumbers, "value");
+let buttonsDict = getControlNumbersDict(ButtonNumbers);
+let fieldsDict = getControlNumbersDict(FieldNumbers);
+let ledsDict = getControlNumbersDict(LedNumbers);
+let combosDict = getControlNumbersDict(ComboNumbers);
+let checksDict = getControlNumbersDict(CheckBoxNumbers);
 
 
 interface TabTreeNode {
@@ -100,15 +99,20 @@ export class TabTree extends BaseComponent {
     formatCtrlName(ctrl: ControlNode){
         let name = ""
         if (ctrl instanceof ButtonNode) {
-            name = "Btn-" + buttonsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            const title = buttonsDict[ctrl.controllN]?.title;
+            name = "Btn-" + (title ?? String(ctrl.controllN));
         } else if (ctrl instanceof FieldNode || ctrl instanceof SliderNode ) {
-            name = "Fld-" + fieldsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            const title = fieldsDict[ctrl.controllN]?.title;
+            name = "Fld-" + (title ?? String(ctrl.controllN));
         } else if (ctrl instanceof LedNode) {
-            name = "Led-" + ledsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            const title = ledsDict[ctrl.controllN]?.title;
+            name = "Led-" + (title ?? String(ctrl.controllN));
         } else if (ctrl instanceof ComboNode) {
-            name = "Cmb-" + combosDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            const title = combosDict[ctrl.controllN]?.title;
+            name = "Cmb-" + (title ?? String(ctrl.controllN));
         } else if (ctrl instanceof CheckboxNode) {
-            name = "Chk-" + checksDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            const title = checksDict[ctrl.controllN]?.title;
+            name = "Chk-" + (title ?? String(ctrl.controllN));
         } else if (ctrl instanceof LabelNode) {
             name = "Lbl-" + (ctrl.value || "None").substring(0, 25);
         } else {
