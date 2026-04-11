@@ -31,6 +31,7 @@ import { config } from "config";
 import { ActionSheetPage } from "leet-mvc/pages/ActionSheetPage/ActionSheetPage";
 import { UserRole } from "../../typings/APIRequests";
 import { APP_VERSION } from "src/version";
+import { expandControlNumberRanges } from "../ControlNumberUtils";
 
 const dataClean = {
   controller: null,
@@ -2385,23 +2386,5 @@ function copyInstance(original){
 }
 
 function getButtonsDropDown(srcItems){
-  var buttons = Objects.copy(srcItems);
-  var items = [];
-  Objects.forEach(buttons, button=>{
-    var matches = button.value.match(/^(\d+)-(\d+)$/);
-    if (matches){
-      //explde the following value: 123-345 into multiple items
-      let i = 0, s=Number(matches[1]), e=Number(matches[2]);
-
-      for (i=s; i<=e; i++) {
-        //fix title according to current index offset
-        var newtitle = button.title.replace(/(\d+)to\d+$/,(a,b,c)=> ""+(Number(b)+i-s).toString());
-
-        items.push({ value: i, title: newtitle, text: button.text })
-      }
-    } else {
-      items.push({ value: button.value, title: button.title, text: button.text })
-    }
-  })
-  return items;
+  return expandControlNumberRanges(srcItems);
 }
