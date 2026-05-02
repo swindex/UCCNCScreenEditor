@@ -11,7 +11,7 @@ import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_con
 import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
-import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabLayer,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldtextNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode, ComboNode, ScreenName, SelectLayerNode } from "../Parser";
+import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabLayer,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldtextNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode, ComboNode, ScreenName, SelectLayerNode, parseMinMax } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
 import { PictureListEditor } from "./PictureListEditor";
 import { Fonts as FontsList } from "../Fonts";
@@ -137,8 +137,8 @@ export class LayoutPage extends HeaderPage {
         { type:"checkbox", name:"blink", title:"Blink", attributes:{title:"Element will be blinking by periodically shifting to a secondary image"}, displayRule:"true_if:controllType,"+ButtonNode.name+","+LedNode.name+"", value: false, class:"col-6"},
       ]},
       { type:"form", class:"row", displayRule:`true_if:controllType,${FieldNode.name},${SliderNode.name}`, items:[
-        { type:"number", name:"min", title:"Min", placeholder:"", validateRule:"numeric", class:"col-6"},
-        { type:"number", name:"max", title:"Max", placeholder:"", validateRule:"numeric", class:"col-6"},
+        { type:"text", name:"min", title:"Min", placeholder:"e.g. 0, -100, 1E-06, double.MinValue", validateRule:"regex:^(-?\\d+(\\.\\d+)?([eE][+\\-]?\\d+)?|double\\.(MinValue|MaxValue|PositiveInfinity|NegativeInfinity|Epsilon))$", class:"col-6"},
+        { type:"text", name:"max", title:"Max", placeholder:"e.g. 100, 1E+308, double.MaxValue", validateRule:"regex:^(-?\\d+(\\.\\d+)?([eE][+\\-]?\\d+)?|double\\.(MinValue|MaxValue|PositiveInfinity|NegativeInfinity|Epsilon))$", class:"col-6"},
       ]},
       
       { type:"form", class:"", displayRule:`true_if:controllType,${ButtonNode.name},${BackgroundNode.name},${LedNode.name},${TabLayer.name}`, items:[
@@ -1764,8 +1764,8 @@ Please make sure to accept all file and directory acess permissions shown by the
         node.fontSize = this.data.fontSize;
         node.color = RGBToargb(this.data.color);
         node.align = this.data.align;
-        node.min = Number(this.data.min);
-        node.max = Number(this.data.max);
+        node.min = parseMinMax(String(this.data.min ?? 0));
+        node.max = parseMinMax(String(this.data.max ?? 0));
 
         if (this.data.fieldText) {
           if (!node.fieldText) {

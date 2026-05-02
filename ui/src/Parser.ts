@@ -854,8 +854,8 @@ export class FieldNode extends ControlWNode {
   fontSize: number=24;
   color: number=0;
   fieldType: string='';
-  min: number=0;
-  max: number=0;
+  min: number | string = 0;
+  max: number | string = 0;
   fieldFilter: FilterfieldtextNode | null = null;
   fieldText: SetfieldtextNode | null = null;
 
@@ -877,8 +877,8 @@ export class FieldNode extends ControlWNode {
     ret.x = Number(m.groups!.x);
     ret.y = Number(m.groups!.y);
     ret.w = Number(m.groups!.w);
-    ret.min = Number(m.groups!.min);
-    ret.max = Number(m.groups!.max);
+    ret.min = parseMinMax(m.groups!.min!.trim());
+    ret.max = parseMinMax(m.groups!.max!.trim());
     ret.fieldType = m.groups!.fieldType!;
     ret.controllN = Number(m.groups!.controllN);
     ret.layerN = Number(m.groups!.layerN);
@@ -1655,13 +1655,40 @@ export function getSimilarProperty(arr, prop){
   return null;
 }
 
-export function minMaxToString(val){
-  if (val=="" || val ==null) {
+export function minMaxToString(val: number | string): string {
+  if (val === "" || val == null) {
     return "0"
+  }
+  // Preserve non-numeric string literals (e.g. "double.MinValue", "double.MaxValue")
+  // that were parsed from the source file verbatim.
+  if (typeof val === 'string') {
+    return val;
   }
   // Normalize scientific notation exponent to always use 2 digits (e.g. 1E-7 -> 1E-07)
   // to match the C# default numeric formatting.
   return Text.toString(val).toUpperCase().replace(/E([+-])(\d)$/, 'E$1' + '0$2');
+}
+
+/**
+ * Parse a min/max field value from the source code.
+ * - Non-numeric strings (e.g. "double.MinValue") are preserved verbatim.
+ * - Scientific-notation literals (e.g. "1E-06") are preserved verbatim
+ *   (normalized to always use 2-digit exponents) so they round-trip exactly.
+ * - Plain numeric strings are converted to JS numbers.
+ */
+export function parseMinMax(val: string): number | string {
+  const n = Number(val);
+  if (isNaN(n)) {
+    // Non-numeric identifier like "double.MinValue" – keep as-is
+    return val;
+  }
+  // If the original string contains an exponent marker, keep it as a string
+  // (normalizing single-digit exponents to two digits, e.g. "1E-6" → "1E-06")
+  // so the output matches the C# default formatting used in the .ssf file.
+  if (/[eE]/.test(val)) {
+    return val.toUpperCase().replace(/E([+-])(\d)$/, 'E$1' + '0$2');
+  }
+  return n;
 }
 
 function num(val:any){
