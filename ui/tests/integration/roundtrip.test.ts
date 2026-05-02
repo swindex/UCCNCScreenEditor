@@ -3,7 +3,7 @@ import { Parser } from '../../src/Parser';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const INPUT_FILE = join(__dirname, '../test-data/Default2019.ssf');
+const INPUT_FILE = join(__dirname, '../test-data/Default2019_v1.ssf');
 const OUTPUT_FILE = join(__dirname, '../test-data/Default2019.output.ssf');
 
 describe('Parser Round-Trip: output must match input exactly', () => {

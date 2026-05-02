@@ -8,12 +8,12 @@ describe('Full File Parsing', () => {
   let parser: Parser;
 
   beforeAll(() => {
-    const filePath = join(__dirname, '../test-data/Default2019.ssf');
+    const filePath = join(__dirname, '../test-data/Default2019_v1.ssf');
     fileContent = readFileSync(filePath, 'utf-8');
     parser = new Parser();
   });
 
-  describe('Default2019.ssf', () => {
+  describe('Default2019_v1.ssf', () => {
     it('should successfully parse the entire file', () => {
       expect(() => {
         parser.parse(fileContent);
