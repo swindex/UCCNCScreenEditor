@@ -103,15 +103,15 @@ export class TabTree extends BaseComponent {
     formatCtrlName(ctrl: ControlNode){
         let name = ""
         if (ctrl instanceof ButtonNode) {
-            name = "Btn-" + buttonsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Btn-" + (buttonsDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof FieldNode || ctrl instanceof SliderNode ) {
-            name = "Fld-" + fieldsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Fld-" + (fieldsDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof LedNode) {
-            name = "Led-" + ledsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Led-" + (ledsDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof ComboNode) {
-            name = "Cmb-" + combosDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Cmb-" + (combosDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof CheckboxNode) {
-            name = "Chk-" + checksDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Chk-" + (checksDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof LabelNode) {
             name = "Lbl-" + (ctrl.value || "None").substring(0, 25);
         } else {
