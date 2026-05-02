@@ -12,11 +12,42 @@ import { LedNumbers } from "../LedNumbers";
 import { ComboNumbers } from "../ComboNumbers";
 import { CheckBoxNumbers } from "../CheckBoxNumbers";
 
-let buttonsDict = Objects.keyBy(ButtonNumbers, "value");
-let fieldsDict = Objects.keyBy(FieldNumbers, "value");
-let ledsDict = Objects.keyBy(LedNumbers, "value");
-let combosDict = Objects.keyBy(ComboNumbers, "value");
-let checksDict = Objects.keyBy(CheckBoxNumbers, "value");
+/**
+ * Expands ranged entries (e.g., "20000-21999") into individual entries for proper dictionary lookup
+ */
+function expandRangedEntries(entries: Array<{value: string, title: string, text: string}>): Array<{value: string, title: string, text: string}> {
+    const expanded: Array<{value: string, title: string, text: string}> = [];
+    
+    for (const entry of entries) {
+        // Check if the value contains a range (e.g., "20000-21999")
+        const rangeMatch = entry.value.match(/^(\d+)-(\d+)$/);
+        
+        if (rangeMatch) {
+            // Expand the range
+            const start = parseInt(rangeMatch[1], 10);
+            const end = parseInt(rangeMatch[2], 10);
+            
+            for (let i = start; i <= end; i++) {
+                expanded.push({
+                    value: String(i),
+                    title: entry.title,
+                    text: entry.text
+                });
+            }
+        } else {
+            // Keep non-ranged entries as-is
+            expanded.push(entry);
+        }
+    }
+    
+    return expanded;
+}
+
+let buttonsDict = Objects.keyBy(expandRangedEntries(ButtonNumbers), "value");
+let fieldsDict = Objects.keyBy(expandRangedEntries(FieldNumbers), "value");
+let ledsDict = Objects.keyBy(expandRangedEntries(LedNumbers), "value");
+let combosDict = Objects.keyBy(expandRangedEntries(ComboNumbers), "value");
+let checksDict = Objects.keyBy(expandRangedEntries(CheckBoxNumbers), "value");
 
 
 interface TabTreeNode {
