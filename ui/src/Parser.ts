@@ -340,7 +340,7 @@ export class Parser {
     var cRegion = null;
 
     var nodes_s = text.split(/\n/g);
-    this.nodes = Objects.map(nodes_s, (line)=>{
+    const mappedNodes = Objects.map(nodes_s, (line)=>{
       var node = null;
 
 
@@ -365,6 +365,8 @@ export class Parser {
 
       return new TextNode(line)
     })
+    
+    this.nodes = Array.isArray(mappedNodes) ? mappedNodes : [];
     
     cRegion = null;
 

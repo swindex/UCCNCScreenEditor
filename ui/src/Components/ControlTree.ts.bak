@@ -39,10 +39,7 @@ export class TabTree extends BaseComponent {
     constructor(){
         super();
         this.treeType = TabTree;
-        }
-
-    get template(): string {
-        return `
+        this.template = `
 <div>
     <div class="tab-node" [selected]="this.isNodeSelected(this.tab ? this.tab.tabNode : null)" [if]="this.tab.name">   
         <div class="icon" data-cy="onExpandToggle" onclick="this.onExpandToggle()"  >
@@ -71,7 +68,7 @@ export class TabTree extends BaseComponent {
         </div>
     </div>
 </div>
-        `;
+        `
     }
 
     onUpdate(): void {
@@ -141,10 +138,7 @@ export class ControlTree extends BaseComponent{
     constructor(){
         super();
         this.treeInstance = new TabTree();
-        }
-
-    get template(): string {
-        return template;
+        this.template = template
     }
 
     setNodes(nodes: ScreenControlNode[]){
@@ -282,8 +276,8 @@ export class ControlTree extends BaseComponent{
             this.expandTabsContainingSelectedNode();
             setTimeout(() => {
                 let el = DOM(this.container).find("[selected]").first();
-                if (el && typeof (el as any).scrollIntoViewIfNeeded == "function" ){
-                    (el as any).scrollIntoViewIfNeeded()
+                if (el && typeof el.scrollIntoViewIfNeeded == "function" ){
+                    el.scrollIntoViewIfNeeded()
                 }
                 //this.scrollSelectedIntoView();
             }, 100);
@@ -301,7 +295,7 @@ export class ControlTree extends BaseComponent{
             // Check if the node's controls or pictures contain any of the selectedNodes
             containsSelected = (
                 selectedNodes.includes(node.tabNode) ||
-                node.tabNodes.some(tab => selectedNodes.includes(tab.tabNode)) ||
+                node.tabNodes.some(tab => selectedNodes.includes(tab)) ||
                 node.controls.some(control => selectedNodes.includes(control)) ||
                 node.pictures.some(picture => selectedNodes.includes(picture))
             );
@@ -330,8 +324,8 @@ export class ControlTree extends BaseComponent{
 
 
 
-    getTabNodeTabs(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number): TabTreeNode[] {
-        let tabs = Objects.filter(nodes, function(el){ return (el instanceof TabLayer && el.parentN == parentN && el.container == screenName) }) as TabLayer[]
+    getTabNodeTabs(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number) {
+        let tabs = Objects.filter(nodes, function(el){ return (el instanceof TabLayer && el.parentN == parentN && el.container == screenName) })
         
         return tabs.map(tab=>{
             return <TabTreeNode> {
@@ -345,16 +339,16 @@ export class ControlTree extends BaseComponent{
         })
     }
 
-    getTabNodeControls(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number): ScreenControlNode[] {
+    getTabNodeControls(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number) {
         return Objects.filter(nodes, function(el){ 
             return !(el instanceof TabLayer) && !(el instanceof PictureNode) && !(el instanceof SelectLayerNode) && el.layerN == parentN && el.container == screenName
-        }) as ScreenControlNode[]
+        })
     }
 
-    getPictureNodes(nodes: ScreenControlNode[], screenName:ScreenName): PictureNode[] {
+    getPictureNodes(nodes: PictureNode[], screenName:ScreenName) {
         return Objects.filter(nodes, function(el){ 
             return (el instanceof PictureNode) && el.container == screenName
-        }) as PictureNode[]
+        })
     }
 
     /** @virtual */

@@ -14,7 +14,7 @@ module.exports = (env) => {
   if (!env.env) env.env="development";
   var plugins = [];
  
-  plugins.push(new HtmlWebpackPlugin({ template: './src/index.html' }));
+  //plugins.push(new HtmlWebpackPlugin({ template: './src/index.html' }));
   plugins.push(new webpack.DefinePlugin({
     'process.env.NODE_ENV': JSON.stringify('development')
   }))
@@ -40,11 +40,6 @@ module.exports = (env) => {
       client: {
         overlay: false,
       },
-      
-      static: { 
-        directory: path.resolve(__dirname, './static/UCCNC'), 
-        publicPath: '/UCCNC'
-      }
     },
     resolve: {
       extensions: ['.ts', '.js', '.json'],
@@ -55,7 +50,15 @@ module.exports = (env) => {
     },
   }
 
-  let m = merge(baseConf(env), conf)
+  //let m = merge(baseConf(env), conf)
   //console.log(JSON.stringify(m, null , '  '))
+  //return m;
+  let m = merge(baseConf(env, {
+    indexHtmlTemplate: './src/index.html', 
+    staticDirectory: {
+      directory: path.resolve(__dirname, './static/UCCNC'),
+      publicPath: '/UCCNC'
+    }
+  }), conf);
   return m;
 };
