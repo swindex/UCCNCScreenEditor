@@ -20,6 +20,7 @@ export class FunctionSelector extends BaseComponent {
   items: FunctionItem[];
   value: string | number | null;
   image: string | null;
+  displayText: string;
 
   constructor() {
     super();
@@ -27,16 +28,50 @@ export class FunctionSelector extends BaseComponent {
     this.items = [];
     this.value = null;
     this.image = null;
+    this.displayText = '';
+  }
+
+  valueChange(newValue: string | number | null) {
+    this.updateDisplayText();
+  }
+
+  itemsChange(newItems: FunctionItem[]) {
+    this.updateDisplayText();
+  }
+
+  updateDisplayText() {
+    if (!this.value) {
+      this.displayText = '';
+      return;
+    }
+    
+    // Find the matching item from items array
+    const item = this.items?.find(i => String(i.value) === String(this.value));
+    
+    if (item) {
+      this.displayText = `${item.value} - ${item.title}`;
+    } else {
+      // Fallback to just the value if no match found
+      this.displayText = String(this.value);
+    }
   }
 
   get template(): string {
     return `<div class="fieldrow">
-      <input type="text" bind="this.value" [attribute]="this.attributes" autocomplete="off" onchange = "this.onChange($event)" />
+      <input type="text" bind="this.displayText" [attribute]="this.attributes" autocomplete="off" onchange = "this.onChange($event)" />
 			<div class="icon" style="color: white; background-color: #2196f3; padding: 3px 5px; height: auto; cursor: pointer; border-radius: 2px;" data-cy="onIconClick" onclick="this.onIconClick()"><i class="fas fa-cog"></i></div>
     </div>`;
   }
 
   onChange(event: Event) {
+    // Extract numeric value from displayText if needed
+    const input = event.target as HTMLInputElement;
+    if (input && input.value) {
+      const match = input.value.match(/^(\d+)/);
+      if (match) {
+        this.value = match[1];
+      }
+    }
     // Override in subclass
   }
 
