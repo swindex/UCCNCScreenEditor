@@ -801,7 +801,7 @@ export class AddcomboboxitemNode extends ScreenControlNode {
   }
 
   getCCode(): string {
-    return `${this.container}.Addcomboboxitem("${str(this.value)}",${num(this.controllN)});`;
+    return `${this.container}.Addcomboboxitem("${str(this.value)}", ${num(this.controllN)});`;
   }
 }
 
