@@ -449,7 +449,7 @@ export class Parser {
 
     nodes.forEach(node=>{
       var line = <string>node.getCCode();
-      if (line !== null && line.trim().length > 0)
+      if (line !== null)
         ret.push(line);
     })
 
@@ -997,7 +997,7 @@ export class CodeviewNode extends ControlWHNode {
     ret.x = Number(m.groups!.x!);
     ret.y = Number(m.groups!.y!);
     ret.w = Number(m.groups!.w!);
-    ret.h = 339;
+    ret.h = Number(m.groups!.h!);
     ret.layerN = Number(m.groups!.layerN!);
 
     return ret;
@@ -1006,7 +1006,7 @@ export class CodeviewNode extends ControlWHNode {
   getCCode(): string {
     return `${this.container}.Addcodeview("${this.value}", "${str(this.font)}", "${str(this.align)}", ${this.fontSize}, ${this.color}, ${num(
       this.x,
-    )}, ${num(this.y)}, ${num(this.w)}, 339, ${this.layerN});`;
+    )}, ${num(this.y)}, ${num(this.w)}, ${num(this.h)}, ${this.layerN});`;
   }
 }
 
@@ -1342,14 +1342,13 @@ export class BackgroundNode extends ControlWHNode{
     ret.h = Number(m.groups.h);
 
     ret.picN = Number(m.groups.picN);
-    //ret.controllN = Number(m.groups.controllN);
-    ret.layerN = ret.controllN = Number(m.groups.layerN);
+    ret.controllN = Number(m.groups.controllN);
+    ret.layerN = Number(m.groups.layerN);
 
     return ret;    
   }
 
   getCCode(){
-    this.controllN = this.layerN
     return `${this.container}.Addbackground(${num(this.x)}, ${num(this.y)}, ${num(this.w)}, ${num(this.h)}, ${this.picN}, ${this.controllN}, ${this.layerN});`
   }
 }
@@ -1660,7 +1659,9 @@ export function minMaxToString(val){
   if (val=="" || val ==null) {
     return "0"
   }
-  return Text.toString(val).toUpperCase();
+  // Normalize scientific notation exponent to always use 2 digits (e.g. 1E-7 -> 1E-07)
+  // to match the C# default numeric formatting.
+  return Text.toString(val).toUpperCase().replace(/E([+-])(\d)$/, 'E$1' + '0$2');
 }
 
 function num(val:any){
