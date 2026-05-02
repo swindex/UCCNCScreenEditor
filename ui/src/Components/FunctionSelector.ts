@@ -23,7 +23,7 @@ export class FunctionSelector extends BaseComponent {
 
   constructor() {
     super();
-    this.title = "Hooo";
+    this.title = "Function Selector";
     this.items = [];
     this.value = null;
     this.image = null;
