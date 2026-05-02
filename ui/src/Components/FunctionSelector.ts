@@ -82,7 +82,7 @@ export class FunctionSelector extends BaseComponent {
 
     var p = Injector.Nav.push(new FunctionSelectorPage(this.title));
     p.items = this.items;
-    p.onItemClicked = (item: FunctionItem) => {
+    p.onItemSelected = (item: FunctionItem) => {
       this.value = item.value;
       this.onChange({target: DOM(this.container).find('input').first()} as any);
     }
