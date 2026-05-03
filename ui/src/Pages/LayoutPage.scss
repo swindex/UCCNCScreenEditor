@@ -160,6 +160,7 @@
         background-size: 100% 100%;
         background-repeat: no-repeat;
         white-space: nowrap;
+        box-sizing: border-box;
 
         &.selected {
           //border: 2px dashed red !important;
