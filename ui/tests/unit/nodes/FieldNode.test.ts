@@ -60,8 +60,8 @@ describe('FieldNode', () => {
       expect(node!.y).toBe(858);
       expect(node!.w).toBe(161);
       expect(node!.fieldType).toBe('textfieldnb');
-      expect(node!.min).toBe(-1.7976931348623157e308);
-      expect(node!.max).toBe(1.7976931348623157e308);
+      expect(node!.min).toBe("-1.7976931348623157E+308");
+      expect(node!.max).toBe("1.7976931348623157E+308");
       expect(node!.controllN).toBe(231);
       expect(node!.layerN).toBe(1);
     });

@@ -92,7 +92,7 @@ export class EditorPage extends DialogPage {
       {
         type: "form", class: "row", items: [
           {
-            type: "form", class: "col-sm-3", items: [
+            type: "form", class: "col-md-12", items: [
               {
                 type: "form", title: "Base Button Properties", class: "box", items: [
                   { type: "label", value: "Base Properties" },
@@ -108,7 +108,7 @@ export class EditorPage extends DialogPage {
             ]
           },
           {
-            type: "form", class: "col-sm-3", items: [
+            type: "form", class: "col", items: [
               {
                 type: "form", class: "box", items: [
                   { type: "label", value: "UP Style" },
@@ -123,7 +123,7 @@ export class EditorPage extends DialogPage {
             ]
           },
           {
-            type: "form", class: "col-sm-3", items: [
+            type: "form", class: "col", items: [
               {
                 type: "form", name: "downStyle", class: "box", items: [
                   { type: "label", value: "Down Style" },
@@ -137,7 +137,7 @@ export class EditorPage extends DialogPage {
             ]
           },
           {
-            type: "form", class: "col-sm-3", displayRule: "true_if:isToggle,true", items: [
+            type: "form", class: "col-sm-4", displayRule: "true_if:isToggle,true", items: [
               {
                 type: "form", name: "toggleStyle", class: "box", items: [
                   { type: "label", value: "Toggle Style" },
