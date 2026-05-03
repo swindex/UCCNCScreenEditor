@@ -7,7 +7,7 @@
     "test:api": "cd api && npm run test",
     "serve:test:api": "cd api && npm run serve-test",
     "serve:test:ui": "cd ui && npm run serve-test",
-    "test:ui": "concurrently \"npm run serve:test:api\" \"npm run serve:test:ui\" \"cypress run\"",
+    "test:ui": "cd ui && npm run test",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
     "install:all": "npm install && cd api && npm install && cd ../ui && npm install"
