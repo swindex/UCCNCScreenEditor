@@ -14,6 +14,7 @@ import { EditorPage } from "./EditorPage";
 import { LoadScreensetDialog } from "./LoadScreensetDialog/LoadScreensetDialog";
 import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabLayer,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldtextNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode, ComboNode, ScreenName, SelectLayerNode, parseMinMax } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
+import { UccncDirHandleManager } from "../UccncDirHandleManager";
 import { PictureListEditor } from "./PictureListEditor";
 import { Fonts as FontsList } from "../Fonts";
 import { get, set } from "idb-keyval";
@@ -284,8 +285,8 @@ export class LayoutPage extends HeaderPage {
     this.title = "UCCNC Screen Editor" + (val ? " - " + val.name : "");
   }
   uccncDirHandleChange(val){
-    if ( val !== undefined)
-      set("uccncDirHandle", val);
+    if (val !== undefined)
+      UccncDirHandleManager.setHandle(val);
   }
   isSampleLoadedChange(val){
     if ( val!== undefined)
@@ -1027,14 +1028,14 @@ export class LayoutPage extends HeaderPage {
 
   async onLoadScreensetClicked(){
     // Pre-fill the dialog with the previously used UCCNC directory from IDB (if any)
-    let savedDirHandle: FileSystemDirectoryHandle | null = null;
-    await get("uccncDirHandle").then(val => {
-      savedDirHandle = val ?? null;
-    });
+    const savedDirHandle = await UccncDirHandleManager.peekHandle();
 
     var dlg = Injector.Nav.push(new LoadScreensetDialog(savedDirHandle));
     dlg.onScreensetLoaded = async (text, fileHandle, uccncDirHandle) => {
       try {
+        // Persist the chosen directory via the manager so it is cached + stored in IDB.
+        await UccncDirHandleManager.setHandle(uccncDirHandle);
+
         // Derive the Flashscreen subdirectory from the UCCNC root for image loading
         let flashscreenHandle: FileSystemDirectoryHandle | null = null;
         try {
@@ -1078,20 +1079,14 @@ export class LayoutPage extends HeaderPage {
   }
 
   async onRestoreSessionClicked(){
-    // Restore the UCCNC root directory handle and re-derive the Flashscreen subdir
-    let uccncDirHandle: FileSystemDirectoryHandle | null = null;
-    await get("uccncDirHandle").then(val => {
-      uccncDirHandle = val;
-    });
+    // Restore the UCCNC root directory handle via the manager (verifies / re-requests permission automatically).
+    // Pass allowPicker=false so we don't open a picker on restore — we only want to verify the stored handle.
+    const uccncDirHandle = await UccncDirHandleManager.getHandle(false);
 
     if (uccncDirHandle) {
-      if (!await FileHelpers.verifyPermission(uccncDirHandle, true)) {
-        Alert("Permission was not given to access the UCCNC directory!");
-        return;
-      }
       this.uccncDirHandle = uccncDirHandle;
 
-      // Derive Flashscreen subdir
+      // Derive the Flashscreen subdirectory
       try {
         this.flashScreenHandle = await uccncDirHandle.getDirectoryHandle("Flashscreen");
       } catch {
@@ -1117,16 +1112,20 @@ export class LayoutPage extends HeaderPage {
   }
 
   onSaveAsScreensetClicked(){
-    if (!this.uccncDirHandle) {
-      Alert("UCCNC directory is not set. Please load a screenset from your computer first.", null, "Error");
-      return;
-    }
-
     const initialName = this.fileHandle ? this.fileHandle.name : "";
 
     Prompt(
       "Enter a filename for the screenset:",
       async (rawValue: string | number) => {
+        // Ensure we have a valid, permission-granted directory handle before proceeding.
+        const dirHandle = await UccncDirHandleManager.getHandle();
+        if (!dirHandle) {
+          Alert("UCCNC directory access was not granted. Save As cancelled.", null, "Error");
+          return;
+        }
+        // Keep the instance property in sync so other code that reads it stays consistent.
+        this.uccncDirHandle = dirHandle;
+
         let fileName = String(rawValue ?? "").trim();
         if (!fileName) return;
 
@@ -1138,7 +1137,7 @@ export class LayoutPage extends HeaderPage {
         // Get the Screens sub-directory handle
         let screensHandle: any;
         try {
-          screensHandle = await this.uccncDirHandle.getDirectoryHandle("Screens", { create: false });
+          screensHandle = await dirHandle.getDirectoryHandle("Screens", { create: false });
         } catch (e) {
           Alert("Could not find the 'Screens' sub-directory inside your UCCNC directory.", null, "Error");
           return;
