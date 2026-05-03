@@ -281,6 +281,7 @@ export class LayoutPage extends HeaderPage {
   fileHandleChange(val){
     if ( val!== undefined)
     set("fileHandle",val);
+    this.title = "UCCNC Screen Editor" + (val ? " - " + val.name : "");
   }
   uccncDirHandleChange(val){
     if ( val !== undefined)
@@ -1115,40 +1116,69 @@ export class LayoutPage extends HeaderPage {
     await this.parse(this.LastSession, this.pendingSave);
   }
 
-  async onSaveAsScreensetClicked(){
-    if (!this.isFileOpsAllowed()) return;
-    let loader = Loader().show("Saving the Screenset!")
-    var fileHandle = await window.showSaveFilePicker({
-      types: [
-        {
-          description: 'Screenset files',
-          accept: {
-            'text/plain': ['.ssf'],
-          },
-        },
-        {
-          description: 'Text Files',
-          accept: {
-            'text/plain': ['.txt'],
-          },
-        },
-      ],
-    });
-    if (!fileHandle) { 
-      loader.hide();
-      return
+  onSaveAsScreensetClicked(){
+    if (!this.uccncDirHandle) {
+      Alert("UCCNC directory is not set. Please load a screenset from your computer first.", null, "Error");
+      return;
     }
 
-    this.fileHandle = fileHandle;
-    let gcode = this.parser.getCCode(true);
-    if (await FileHelpers.writeTextToFileHandle(gcode,  this.fileHandle)) {
-      this.pendingSave = false;
-    } else {
-      Alert("Wasn't able to save the screenset!\nPlease try again.",null, "Save Error");
-    }
-    loader.hide();
-      
-    
+    const initialName = this.fileHandle ? this.fileHandle.name : "";
+
+    Prompt(
+      "Enter a filename for the screenset:",
+      async (rawValue: string | number) => {
+        let fileName = String(rawValue ?? "").trim();
+        if (!fileName) return;
+
+        // Ensure .ssf extension
+        if (!fileName.toLowerCase().endsWith(".ssf")) {
+          fileName += ".ssf";
+        }
+
+        // Get the Screens sub-directory handle
+        let screensHandle: any;
+        try {
+          screensHandle = await this.uccncDirHandle.getDirectoryHandle("Screens", { create: false });
+        } catch (e) {
+          Alert("Could not find the 'Screens' sub-directory inside your UCCNC directory.", null, "Error");
+          return;
+        }
+
+        // Check if file already exists
+        let fileExists = false;
+        try {
+          await screensHandle.getFileHandle(fileName, { create: false });
+          fileExists = true;
+        } catch (_) {}
+
+        const doSave = async () => {
+          const loader = Loader().show("Saving the Screenset...");
+          try {
+            const newFileHandle = await screensHandle.getFileHandle(fileName, { create: true });
+            this.fileHandle = newFileHandle;
+            const gcode = this.parser.getCCode(true);
+            if (await FileHelpers.writeTextToFileHandle(gcode, this.fileHandle)) {
+              this.pendingSave = false;
+            } else {
+              Alert("Wasn't able to save the screenset!\nPlease try again.", null, "Save Error");
+            }
+          } catch (e) {
+            if (e && e.message) Alert(e.message, null, "Save Error");
+          } finally {
+            loader.hide();
+          }
+        };
+
+        if (fileExists) {
+          Confirm(`"${fileName}" already exists. Overwrite?`, doSave);
+        } else {
+          await doSave();
+        }
+      },
+      "Save As",
+      initialName,
+      "required"
+    );
   }
 
   isFileOpsAllowed(){
