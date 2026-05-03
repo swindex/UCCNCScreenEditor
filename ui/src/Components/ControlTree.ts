@@ -12,11 +12,42 @@ import { LedNumbers } from "../LedNumbers";
 import { ComboNumbers } from "../ComboNumbers";
 import { CheckBoxNumbers } from "../CheckBoxNumbers";
 
-let buttonsDict = Objects.keyBy(ButtonNumbers, "value");
-let fieldsDict = Objects.keyBy(FieldNumbers, "value");
-let ledsDict = Objects.keyBy(LedNumbers, "value");
-let combosDict = Objects.keyBy(ComboNumbers, "value");
-let checksDict = Objects.keyBy(CheckBoxNumbers, "value");
+/**
+ * Expands ranged entries (e.g., "20000-21999") into individual entries for proper dictionary lookup
+ */
+function expandRangedEntries(entries: Array<{value: string, title: string, text: string}>): Array<{value: string, title: string, text: string}> {
+    const expanded: Array<{value: string, title: string, text: string}> = [];
+    
+    for (const entry of entries) {
+        // Check if the value contains a range (e.g., "20000-21999")
+        const rangeMatch = entry.value.match(/^(\d+)-(\d+)$/);
+        
+        if (rangeMatch) {
+            // Expand the range
+            const start = parseInt(rangeMatch[1], 10);
+            const end = parseInt(rangeMatch[2], 10);
+            
+            for (let i = start; i <= end; i++) {
+                expanded.push({
+                    value: String(i),
+                    title: entry.title,
+                    text: entry.text
+                });
+            }
+        } else {
+            // Keep non-ranged entries as-is
+            expanded.push(entry);
+        }
+    }
+    
+    return expanded;
+}
+
+let buttonsDict = Objects.keyBy(expandRangedEntries(ButtonNumbers), "value");
+let fieldsDict = Objects.keyBy(expandRangedEntries(FieldNumbers), "value");
+let ledsDict = Objects.keyBy(expandRangedEntries(LedNumbers), "value");
+let combosDict = Objects.keyBy(expandRangedEntries(ComboNumbers), "value");
+let checksDict = Objects.keyBy(expandRangedEntries(CheckBoxNumbers), "value");
 
 
 interface TabTreeNode {
@@ -39,7 +70,10 @@ export class TabTree extends BaseComponent {
     constructor(){
         super();
         this.treeType = TabTree;
-        this.template = `
+        }
+
+    get template(): string {
+        return `
 <div>
     <div class="tab-node" [selected]="this.isNodeSelected(this.tab ? this.tab.tabNode : null)" [if]="this.tab.name">   
         <div class="icon" data-cy="onExpandToggle" onclick="this.onExpandToggle()"  >
@@ -68,7 +102,7 @@ export class TabTree extends BaseComponent {
         </div>
     </div>
 </div>
-        `
+        `;
     }
 
     onUpdate(): void {
@@ -100,15 +134,15 @@ export class TabTree extends BaseComponent {
     formatCtrlName(ctrl: ControlNode){
         let name = ""
         if (ctrl instanceof ButtonNode) {
-            name = "Btn-" + buttonsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Btn-" + (buttonsDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof FieldNode || ctrl instanceof SliderNode ) {
-            name = "Fld-" + fieldsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Fld-" + (fieldsDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof LedNode) {
-            name = "Led-" + ledsDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Led-" + (ledsDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof ComboNode) {
-            name = "Cmb-" + combosDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Cmb-" + (combosDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof CheckboxNode) {
-            name = "Chk-" + checksDict[ctrl.controllN]?.title || String(ctrl.controllN);
+            name = "Chk-" + (checksDict[ctrl.controllN]?.title || String(ctrl.controllN));
         } else if (ctrl instanceof LabelNode) {
             name = "Lbl-" + (ctrl.value || "None").substring(0, 25);
         } else {
@@ -138,7 +172,10 @@ export class ControlTree extends BaseComponent{
     constructor(){
         super();
         this.treeInstance = new TabTree();
-        this.template = template
+        }
+
+    get template(): string {
+        return template;
     }
 
     setNodes(nodes: ScreenControlNode[]){
@@ -276,8 +313,8 @@ export class ControlTree extends BaseComponent{
             this.expandTabsContainingSelectedNode();
             setTimeout(() => {
                 let el = DOM(this.container).find("[selected]").first();
-                if (el && typeof el.scrollIntoViewIfNeeded == "function" ){
-                    el.scrollIntoViewIfNeeded()
+                if (el && typeof (el as any).scrollIntoViewIfNeeded == "function" ){
+                    (el as any).scrollIntoViewIfNeeded()
                 }
                 //this.scrollSelectedIntoView();
             }, 100);
@@ -295,7 +332,7 @@ export class ControlTree extends BaseComponent{
             // Check if the node's controls or pictures contain any of the selectedNodes
             containsSelected = (
                 selectedNodes.includes(node.tabNode) ||
-                node.tabNodes.some(tab => selectedNodes.includes(tab)) ||
+                node.tabNodes.some(tab => selectedNodes.includes(tab.tabNode)) ||
                 node.controls.some(control => selectedNodes.includes(control)) ||
                 node.pictures.some(picture => selectedNodes.includes(picture))
             );
@@ -324,8 +361,8 @@ export class ControlTree extends BaseComponent{
 
 
 
-    getTabNodeTabs(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number) {
-        let tabs = Objects.filter(nodes, function(el){ return (el instanceof TabLayer && el.parentN == parentN && el.container == screenName) })
+    getTabNodeTabs(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number): TabTreeNode[] {
+        let tabs = Objects.filter(nodes, function(el){ return (el instanceof TabLayer && el.parentN == parentN && el.container == screenName) }) as TabLayer[]
         
         return tabs.map(tab=>{
             return <TabTreeNode> {
@@ -339,16 +376,16 @@ export class ControlTree extends BaseComponent{
         })
     }
 
-    getTabNodeControls(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number) {
+    getTabNodeControls(nodes: ScreenControlNode[], screenName:ScreenName, parentN: number): ScreenControlNode[] {
         return Objects.filter(nodes, function(el){ 
             return !(el instanceof TabLayer) && !(el instanceof PictureNode) && !(el instanceof SelectLayerNode) && el.layerN == parentN && el.container == screenName
-        })
+        }) as ScreenControlNode[]
     }
 
-    getPictureNodes(nodes: PictureNode[], screenName:ScreenName) {
+    getPictureNodes(nodes: ScreenControlNode[], screenName:ScreenName): PictureNode[] {
         return Objects.filter(nodes, function(el){ 
             return (el instanceof PictureNode) && el.container == screenName
-        })
+        }) as PictureNode[]
     }
 
     /** @virtual */

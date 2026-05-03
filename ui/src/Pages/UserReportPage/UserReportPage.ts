@@ -18,8 +18,8 @@ export class UserReportPage extends HeaderPage {
     super()
   }
 
-  itemsChange(val) {
-    this.filteredItems = Objects.copy(val)
+  itemsChange(val: UserItem[]) {
+    this.filteredItems = Array.isArray(val) ? Objects.copy(val) : []
   }
 
   onItemSelected(selectedValue) {
@@ -45,9 +45,10 @@ export class UserReportPage extends HeaderPage {
 
     let reg = new RegExp(value, 'gi')
 
-    this.filteredItems = Objects.filter(this.items, f => {
+    const filtered = Objects.filter(this.items, f => {
       return !!(JSON.stringify(f)).match(reg);
-    })
+    });
+    this.filteredItems = Array.isArray(filtered) ? filtered : [];
 
   }
 

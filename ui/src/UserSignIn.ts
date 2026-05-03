@@ -5,10 +5,7 @@ import { Alert } from "leet-mvc/core/simple_confirm";
 import { State } from "leet-mvc/core/State";
 import { Storage } from "leet-mvc/core/storage";
 import { Injector } from "leet-mvc/core/Injector";
-import { InjectTemplate } from "./InjectTemplate";
 import { UserReportPage } from "./Pages/UserReportPage/UserReportPage";
-
-var Inject  = Injector.implement(InjectTemplate);
 
 export class UserSignIn {
     url: string;
@@ -108,9 +105,9 @@ export class UserSignIn {
         this._token = data?.token;
         Storage.set("TOKEN",  data?.token || null);
         if ( data?.token) {
-            this.userSigninStatusChanged.set(data)
+            this.userSigninStatusChanged.setData(data)
         } else {
-            this.userSigninStatusChanged.set(null);
+            this.userSigninStatusChanged.setData(null);
         }
     }
 
@@ -146,7 +143,7 @@ export class UserSignIn {
     async showEditUsers() {
         //throw new Error("Method not implemented.");
        
-        let p = Inject.Nav.push(UserReportPage)
+        let p = Injector.Nav.push(UserReportPage)
 
         p.items = await this.getUsers();
 

@@ -1,23 +1,31 @@
 {
 	"compilerOptions": {
 		"outDir": "./www",
-		"baseUrl": ".",
 		"checkJs": true,
-		"module": "commonjs",
-		"target": "ES2018",
+    	"target": "es2018",                       /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */
+        "module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+        "lib": ["es2018","es2018.promise","DOM"],                             /* Specify library files to be included in the compilation. */
+        "allowJs": true,                       /* Allow javascript files to be compiled. */
+    	"skipLibCheck": true,
 		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
 		"paths": {
 			"config":["./src/configs/config"],
-		}
+		},
+		"declaration": false,                     /* Generates corresponding '.d.ts' file. */
+		"strict": false,                           /* Enable all strict type-checking options. */
+   		"noImplicitAny": false,                 /* Raise error on expressions and declarations with an implied 'any' type. */
 	},
 
 	"include": [
 		"src/**/*",
     	"typings/**/*",
-    	"node_modules/leet-mvc/**/*"
+	    "*.html"
 	],
 	"exclude": [
-		"www"
+		"www",
+		"webpack.config.js",
+		"node_modules"
 	],
 	
 }

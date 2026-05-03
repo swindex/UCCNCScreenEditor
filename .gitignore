@@ -2,3 +2,4 @@ node_modules
 ui/www/
 utils/secret.js
 .vscode/tasks.json
+ui/tests/test-data/*.output.ssf

@@ -42,26 +42,32 @@ export interface UserItem
     created_at : Date
 }
 
-export function MapUserItems(items: any[]) {
-    let role_ids = {
+export function MapUserItems(items: any[]): UserItem[] {
+    let role_ids: {[key: number]: string} = {
         1: "Admin",
         2: "User",
         3: "Customer"
     };
 
-    return <UserItem[]>items.map(item=>DataShape.copy(item, {
-        id: DataShape.integer(),
-        username : DataShape.string(),
-        first_name : DataShape.string(),
-        last_name : DataShape.string(),
-        role_id : DataShape.integer(),
-        updated_at : DataShape.date(),
-        created_at : DataShape.date(),
-    })).map(item=>{
+    return items.map(item => {
+        const copied: any = DataShape.copy(item, {
+            id: DataShape.integer(),
+            username : DataShape.string(),
+            first_name : DataShape.string(),
+            last_name : DataShape.string(),
+            role_id : DataShape.integer(),
+            updated_at : DataShape.date(),
+            created_at : DataShape.date(),
+        });
         return {
-            ...item,
-            role_name: role_ids[item.role_id]
-        }
-    })
-    
+            id: copied.id,
+            username: copied.username,
+            first_name: copied.first_name,
+            last_name: copied.last_name,
+            role_id: copied.role_id,
+            role_name: role_ids[copied.role_id as number] || "Unknown",
+            updated_at: copied.updated_at,
+            created_at: copied.created_at
+        } as UserItem;
+    });
 }
