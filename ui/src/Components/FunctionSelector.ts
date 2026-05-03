@@ -1,11 +1,8 @@
-import { DialogPage } from "leet-mvc/pages/DialogPage/DialogPage";
 import { FunctionSelectorPage } from "../Pages/FunctionSelectorPage/FunctionSelectorPage";
-import { PictureGallery } from "./PictureGallery";
 import { BaseComponent } from "leet-mvc/components/BaseComponent";
 import { Forms } from "leet-mvc/components/Forms";
 import { DOM } from "leet-mvc/core/DOM";
 import { Injector } from "leet-mvc/core/Injector";
-import { Objects } from "leet-mvc/core/Objects";
 import { RegisterComponent } from "leet-mvc/core/Register";
 import { Alert } from "leet-mvc/core/simple_confirm";
 

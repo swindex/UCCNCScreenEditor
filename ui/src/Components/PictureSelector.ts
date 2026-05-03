@@ -40,26 +40,25 @@ export class PictureSelector extends BaseComponent {
       Alert("Items is empty!")
     }
 
-    var p = Injector.Nav.push(new DialogPage("Select Picture"));
-    var pS = new PictureGallery();
-    pS.items = this.items;
+    var p: DialogPage = Injector.Nav.push(PictureListDialog);
+    p.title = "Select Picture";
+    //p.content = new PictureGallery();
+    p.items = this.items;
 
-    pS.onItemClick = (item: ResolvedPicture, index: number) => {
+    p.onItemClick = (item: ResolvedPicture, index: number) => {
       p.destroy();
       this.value = item.picN;
       this.onChange({target: DOM(this.container).find('input').first()} as any);
     }
     
-    (p as any).buttons = {
+    p.buttons = {
       "Close": () => {
         p.destroy();
       }
     };
 
-    (p as any).content = pS;
-
     p.onVisible = () => {
-      pS.setSelectedIndex(this.items.findIndex(el => el.picN == this.value))
+      p.setSelectedIndex(this.items.findIndex(el => el.picN == this.value))
     }
   }
 
@@ -76,5 +75,29 @@ export class PictureSelector extends BaseComponent {
         </picture-select>`
       );
     }
+  }
+}
+
+class PictureListDialog extends DialogPage {
+  gallery: PictureGallery;
+  items: ResolvedPicture[] = [];
+  constructor(public flashScreenHandle: FileSystemDirectoryHandle) {
+    super();
+    this.gallery = new PictureGallery();
+    this.title = "Picture List Editor";
+  }
+
+  onItemClick: (item: ResolvedPicture, index: number) => void;
+
+  setSelectedIndex(index: number) {
+    if (this.gallery) {
+      this.gallery.setSelectedIndex(index);
+    }
+  }
+
+  get template() {
+    return this.extendTemplate(super.template, `
+      <div [component]="this.gallery" [items]="this.items" [onItemClick]="this.onItemClick"></div>
+    `);
   }
 }

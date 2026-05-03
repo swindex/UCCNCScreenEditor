@@ -11,6 +11,7 @@ import { Alert, Confirm, ConfirmButtons, Prompt } from "leet-mvc/core/simple_con
 import { Dialog } from "leet-mvc/pages/DialogPage/DialogPage";
 import { Injector } from "leet-mvc/core/Injector";
 import { EditorPage } from "./EditorPage";
+import { LoadScreensetDialog } from "./LoadScreensetDialog/LoadScreensetDialog";
 import { BackgroundNode, ButtonNode, CheckboxNode, FieldNode, LabelNode, LedNode, SetJogPanelTabSizeNode, TabLayer,argbToRGB,CodeviewNode,ListNode,ControlNode, PictureNode, SliderNode, UCCAMNode, ToolpathNode, Parser, normalColor, ColorNode, SetScreenSizeNode, SetJogPanelSizeNode, SetfieldtextNode, FilterfieldtextNode, RGBToargb, getSimilarProperty, SetBitmapFolderNode, FillNode, CNode, UCCNCEditorSettings, ButtonJSONNode, ComboNode, ScreenName, SelectLayerNode, parseMinMax } from "../Parser";
 import { FileHelpers } from "../FileHelpers";
 import { PictureListEditor } from "./PictureListEditor";
@@ -75,8 +76,12 @@ export class LayoutPage extends HeaderPage {
     this.title = "UCCNC Screen Editor"
     /** @type {FileSystemFileHandle} */
     this.fileHandle= undefined;
+    /** The root UCCNC installation directory (e.g. C:\UCCNC) selected by the user */
     /** @type {FileSystemDirectoryHandle} */
-    this.dirHandle = undefined;
+    this.uccncDirHandle = undefined;
+    /** The Flashscreen subdirectory derived from uccncDirHandle – used for image loading */
+    /** @type {FileSystemDirectoryHandle} */
+    this.flashScreenHandle = undefined;
 
     /** @type {HTMLDivElement} */
     this.selectBox = null;
@@ -277,9 +282,9 @@ export class LayoutPage extends HeaderPage {
     if ( val!== undefined)
     set("fileHandle",val);
   }
-  dirHandleChange(val){
-    if ( val!== undefined)
-    set("dirHandle",val);
+  uccncDirHandleChange(val){
+    if ( val !== undefined)
+      set("uccncDirHandle", val);
   }
   isSampleLoadedChange(val){
     if ( val!== undefined)
@@ -704,7 +709,7 @@ export class LayoutPage extends HeaderPage {
   }
 
   async onEditPictureListClicked(){
-    var p = Injector.Nav.push(new PictureListEditor(this.dirHandle));
+    var p = Injector.Nav.push(new PictureListEditor(this.flashScreenHandle));
     p.gallery.items = await this.getCurrentPictureList();
     //p.pictures = this.pictures;
     p.container = this.selectedNodes[0]?.container || 'AS3';
@@ -866,7 +871,7 @@ export class LayoutPage extends HeaderPage {
     /** @type {ButtonJSONNode} */
     var jsonNode = Objects.find(this.parser.getNodes(), node=> node instanceof ButtonJSONNode && node.picN == button.picN && node.layerN == button.layerN);
 
-    var p = Injector.Nav.push(new EditorPage(button, this.dirHandle, jsonNode?.json));
+    var p = Injector.Nav.push(new EditorPage(button, this.flashScreenHandle, jsonNode?.json));
 
     
 
@@ -1020,33 +1025,33 @@ export class LayoutPage extends HeaderPage {
   }
 
   async onLoadScreensetClicked(){
-    ConfirmButtons(`When prompted, please do the following:\n
-Select the Screenset file: C:/UCCNC/Screens/ScreenSetName.ssf\n
-Select the Flashscreen directory with all screenset image files such as: C:/UCCNC/Flashscreen/\n
-Please make sure to accept all file and directory acess permissions shown by the browser!`, "Please Read!", { Cancel: null, OK: (dialog)=>{
-      (async ()=> {
+    // Pre-fill the dialog with the previously used UCCNC directory from IDB (if any)
+    let savedDirHandle: FileSystemDirectoryHandle | null = null;
+    await get("uccncDirHandle").then(val => {
+      savedDirHandle = val ?? null;
+    });
+
+    var dlg = Injector.Nav.push(new LoadScreensetDialog(savedDirHandle));
+    dlg.onScreensetLoaded = async (text, fileHandle, uccncDirHandle) => {
+      try {
+        // Derive the Flashscreen subdirectory from the UCCNC root for image loading
+        let flashscreenHandle: FileSystemDirectoryHandle | null = null;
         try {
-          var [fileHandle] = await window.showOpenFilePicker();
-          //if (await this.verifyPermission(this.fileHandle, true)) {
-            var dirHandle = await window.showDirectoryPicker();
-            if (dirHandle) {
-              this.fileHandle = fileHandle;
-              this.dirHandle = dirHandle;
-              var file = await this.fileHandle.getFile();
-              var text = await file.text();
-              
-              this.history = [];
-              await this.parse(text, false);
-              dialog.destroy();
-            }
-          //}
-        } catch (ex) {
-          Alert(ex.message, null, "Error loading screenset!");
+          flashscreenHandle = await uccncDirHandle.getDirectoryHandle("Flashscreen");
+        } catch {
+          // Flashscreen folder not found — image loading will silently fail per existing behaviour
         }
-      })()
-      return false;
-    }})
-    
+
+        this.fileHandle = fileHandle;
+        this.uccncDirHandle = uccncDirHandle;
+        this.flashScreenHandle = flashscreenHandle;
+
+        this.history = [];
+        await this.parse(text, false);
+      } catch (ex) {
+        Alert(ex.message, null, "Error loading screenset!");
+      }
+    };
   }
 
   async onSignInRegisterClicked(){
@@ -1072,26 +1077,41 @@ Please make sure to accept all file and directory acess permissions shown by the
   }
 
   async onRestoreSessionClicked(){
-    var dirHandle = null
-    await get("dirHandle").then(val=>{
-      dirHandle = val;
-    })
-    if (dirHandle && !await FileHelpers.verifyPermission(dirHandle, true)) {
-      Alert("Permission was not given to access the Flashcreen directory!")
+    // Restore the UCCNC root directory handle and re-derive the Flashscreen subdir
+    let uccncDirHandle: FileSystemDirectoryHandle | null = null;
+    await get("uccncDirHandle").then(val => {
+      uccncDirHandle = val;
+    });
+
+    if (uccncDirHandle) {
+      if (!await FileHelpers.verifyPermission(uccncDirHandle, true)) {
+        Alert("Permission was not given to access the UCCNC directory!");
+        return;
+      }
+      this.uccncDirHandle = uccncDirHandle;
+
+      // Derive Flashscreen subdir
+      try {
+        this.flashScreenHandle = await uccncDirHandle.getDirectoryHandle("Flashscreen");
+      } catch {
+        this.flashScreenHandle = null;
+      }
+    } else {
+      Alert("No previously used UCCNC directory found in storage. File operations will not be available until you load a screenset from your computer and grant access to the UCCNC directory.", null, "Warning");
+      this.uccncDirHandle = null;
+      this.flashScreenHandle = null;
       return;
     }
-    this.dirHandle = dirHandle
 
     this.history = [];
-    
-    await get("isSampleLoaded").then(val=>{
-      this.isSampleLoaded = val;
-    })
-    await get("fileHandle").then(val=>{
-      this.fileHandle = val;
-    })
 
-    
+    await get("isSampleLoaded").then(val => {
+      this.isSampleLoaded = val;
+    });
+    await get("fileHandle").then(val => {
+      this.fileHandle = val;
+    });
+
     await this.parse(this.LastSession, this.pendingSave);
   }
 
@@ -1511,9 +1531,9 @@ Please make sure to accept all file and directory acess permissions shown by the
         picture_down_name:filename2,
       }
       
-      if (this.dirHandle) {
+      if (this.flashScreenHandle) {
         if (filename1)
-        promises.push(FileHelpers.getDirectoryFileContents(this.dirHandle, filename1).then(contents=>{
+        promises.push(FileHelpers.getDirectoryFileContents(this.flashScreenHandle, filename1).then(contents=>{
           ret1.picture_up = contents;
         }).catch(err=>{
           this.renderErrors.push({type:"Error", message: "Unable to load " + filename1 +" " + err.message, node:picture})
@@ -1521,7 +1541,7 @@ Please make sure to accept all file and directory acess permissions shown by the
         }));
 
         if (filename2)
-        promises.push(FileHelpers.getDirectoryFileContents(this.dirHandle, filename2).then(contents=>{
+        promises.push(FileHelpers.getDirectoryFileContents(this.flashScreenHandle, filename2).then(contents=>{
           ret1.picture_down = contents;
         }).catch(err=>{
           //console.error(filename2);
@@ -2051,10 +2071,10 @@ Please make sure to accept all file and directory acess permissions shown by the
                       
             node.picture = pictures[node.picN];
 
-            if (this.dirHandle) {
+            if (this.flashScreenHandle) {
               var filename2 = pictures[node.picN].picture_down;// Text.fileFullName(pictures[node.picN].picture_down);
               if (filename2)
-              FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename2).then((ret: any)=>{
+              FileHelpers.getDirectoryFileHandleAndContents(this.flashScreenHandle, filename2).then((ret: any)=>{
                 node.picture.picture_down_handle = ret.fileHandle;
                 if (node instanceof TabLayer && !isTabSelected)
                   el.style.backgroundImage = `url(${ret.contents})`;
@@ -2063,7 +2083,7 @@ Please make sure to accept all file and directory acess permissions shown by the
               })
               var filename1 = pictures[node.picN].picture_up ;//Text.fileFullName(pictures[node.picN].picture_up);
               if (filename1)
-              FileHelpers.getDirectoryFileHandleAndContents(this.dirHandle, filename1).then((ret: any)=>{
+              FileHelpers.getDirectoryFileHandleAndContents(this.flashScreenHandle, filename1).then((ret: any)=>{
                 node.picture.picture_up_handle = ret.fileHandle;
                 if (!(node instanceof TabLayer) || isTabSelected)
                   el.style.backgroundImage = `url(${ret.contents})`;
