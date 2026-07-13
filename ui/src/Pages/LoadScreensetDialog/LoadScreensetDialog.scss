@@ -1,0 +1,110 @@
+.page-LoadScreensetDialog {
+  .lsd-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 420px;
+    padding: 4px 0;
+  }
+
+  .lsd-hint {
+    margin: 0;
+    color: #555;
+    font-size: 0.95em;
+    line-height: 1.5;
+    code {
+      background: #f0f0f0;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 0.92em;
+    }
+  }
+
+  /* Classic directory-picker row: [ Browse btn ][ path text field ] */
+  .lsd-dir-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .lsd-dir-btn {
+    flex: 0 0 auto;
+    border: none;
+    border-right: 1px solid #ced4da;
+    border-radius: 0;
+    padding: 6px 12px;
+    background: #e9ecef;
+    color: #495057;
+    font-size: 0.93em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover,
+    &:focus {
+      background: #d3d8de;
+      outline: none;
+    }
+  }
+
+  .lsd-dir-path {
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font-size: 0.93em;
+    color: #212529;
+    background: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.6;
+
+    &.lsd-dir-path--empty {
+      color: #adb5bd;
+      font-style: italic;
+    }
+  }
+
+  .lsd-message {
+    padding: 10px 14px;
+    border-radius: 6px;
+    background-color: #e8f4fd;
+    border: 1px solid #b8d9f0;
+    color: #1a5f8a;
+    font-size: 0.93em;
+
+    &[error] {
+      background-color: #fde8e8;
+      border-color: #f0b8b8;
+      color: #8a1a1a;
+    }
+  }
+
+  .lsd-dropdown-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .lsd-label {
+    font-weight: 600;
+    font-size: 0.93em;
+    margin: 0;
+  }
+
+  .lsd-select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1em;
+    background-color: #fff;
+    &:focus {
+      outline: none;
+      border-color: #80bdff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+  }
+}

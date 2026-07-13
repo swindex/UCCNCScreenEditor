@@ -6,8 +6,9 @@ import "./FileSystemFilePicker.scss";
 interface FileItem {
   icon:string,
   name:string,
-  handle:FileSystemDirectoryHandle | FileSystemFileHandle,
-  parentHandle:FileSystemDirectoryHandle
+  handle:FileSystemDirectoryHandle | FileSystemFileHandle | null,
+  parentHandle:FileSystemDirectoryHandle | null,
+  path?:string
 }
 
 export class FileSystemFilePicker extends DialogPage {
@@ -62,7 +63,7 @@ export class FileSystemFilePicker extends DialogPage {
       }
     }
 
-    this.getDirContents({ handle: this.dirHandle });
+    this.getDirContents({ icon: "", name: "", handle: this.dirHandle, parentHandle: null });
   }
 
   /** @override */
@@ -88,11 +89,11 @@ export class FileSystemFilePicker extends DialogPage {
       return;
     }
     var reg = new RegExp(val, "ig");
-    this.filteredItems = Objects.filter(this.items, item=>item.name.match(reg));
+    this.filteredItems = Objects.filter(this.items, item=>!!item.name.match(reg)) as FileItem[];
   }
 
   async getDirContents(item: FileItem){
-    var items = []
+    var items: FileItem[] = []
     this.selectedDirItem = item
     if (item.parentHandle) {
       items.push({
@@ -102,18 +103,20 @@ export class FileSystemFilePicker extends DialogPage {
         parentHandle: null
       });
     }
-    for await (let [name, handle] of item.handle.entries()) {
-      if (this.isDirectory && handle.kind != "directory"){
-        //hide files if only directory requested
-        continue;
-      }
-      items.push({
-        icon: this.getIcon(name, handle.kind),
-        name:name,
-        handle: handle,
-        parentHandle :  item.handle
-      });
+    if (item.handle && item.handle.kind === "directory") {
+      for await (let [name, handle] of (item.handle as FileSystemDirectoryHandle).entries()) {
+        if (this.isDirectory && handle.kind != "directory"){
+          //hide files if only directory requested
+          continue;
+        }
+        items.push({
+          icon: this.getIcon(name, handle.kind),
+          name:name,
+          handle: handle,
+          parentHandle :  item.handle as FileSystemDirectoryHandle
+        });
     
+      }
     }
 
 
