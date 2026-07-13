@@ -21,7 +21,7 @@
     "axios": "^1.15.2",
     "bootstrap-4-grid": "^3.4.0",
     "idb-keyval": "^6.2.1",
-    "leet-mvc": "github:swindex/leet-mvc#v4.0.37"
+    "leet-mvc": "github:swindex/leet-mvc#v4.0.39"
   },
   "browser": {
     "buffer": false
